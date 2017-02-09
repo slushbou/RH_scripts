@@ -1,0 +1,136 @@
+Sub Write_Record()
+
+    ' ------------------------------------------------------
+    ' SEC Form 13f file creation routine
+    ' Create text file in .xml format from Excel table of securities
+    ' Author:  SHL
+    ' Date:    Feb. 6, 2017
+    ' ------------------------------------------------------
+    
+    Dim issuerName As String
+    Dim classTitle As String
+    Dim cusip As String
+    Dim value As String
+    Dim sshPrnamt As String
+    Dim sshPrnamtType As String
+    
+    Dim investDiscretion As String
+    Dim votingAuthoritySole As String
+    Dim votingAuthorityShared As String
+    Dim votingAuthorityNone As String
+   
+    Dim issuerTag As String
+    Dim classTitleTag As String
+    Dim cusipTag As String
+    Dim valueTag As String
+    Dim sharesTag As String
+    Dim shsOrPrnTag As String
+    Dim investDiscretionTag As String
+    
+    Dim outFile As String
+    Dim rowIndex As Integer
+    Dim colIndex As Integer
+    Dim x As Integer
+    
+    ' -------------   End of variable definitions   --------------
+
+    ' ---  Define xml tags.  These xml tags must match what's in the Form 13f namespace file  "Filename TBD"  -----
+    
+    
+    infoTableTag = "<infoTable>"
+    
+    issuerTag = "<nameOfIssuer>"
+    issuerTagEnd = "</nameOfIssuer>"
+    classTitleTag = "<titleOfClass>"
+    classTitleTagEnd = "</titleOfClass>"
+    cusipTag = "<cusip>"
+    cusipTagEnd = "</cusip>"
+    
+    'Value in thousands
+    valueTag = "<value>"
+    valueTagEnd = "</value>"
+    
+    shrsOrPrnAmtTag = "<shrsOrPrnAmt>"
+      'Number of shares
+      sshPrnamtTag = "<sshPrnamt>"
+      sshPrnamtTagEnd = "</sshPrnamt>"
+      
+      'SH or PRN
+      sshPrnamtTypeTag = "<sshPrnamtType>"
+      sshPrnamtTypeTagEnd = "</sshPrnamtType>"
+    shrsOrPrnAmtTagEnd = "</shrsOrPrnAmt>"
+    
+    'SOLE
+    investmentDiscretionTag = "<investmentDiscretion>"
+    investmentDiscretionTagEnd = "</investmentDiscretion>"
+    otherManagerTag = "<otherManager>"
+    otherManagerTagEnd = "</otherManager>"
+    
+    VotingAuthorityTag = "<votingAuthority>"
+      'Number of shares
+      SoleTag = "<Sole>"
+      SoleTagEnd = "</Sole>"
+      SharedTag = "<Shared>"
+      SharedTagEnd = "</Shared>"
+      NoneTag = "<None>"
+      NoneTagEnd = "</None>"
+    VotingAuthorityTagEnd = "</votingAuthority>"
+
+    infoTableTagEnd = "</infoTable>"
+
+    ' -----  End of XML tag definitions  -----
+
+    'Get values from spreadsheet to put into xml file.  Loop over lines.  Initialize row index to start.
+    
+    outFile = "K:\RHAM_snaps\2017-02-03\13F\zz_out13f.xml"
+    Open outFile For Output As #1
+     
+
+    'Initialize rowIndex correctly before running this routine
+    rowIndexStart = 4
+    NumRows = Range("A4", Range("A4").End(xlDown)).Rows.Count
+
+    For rowIndex = rowIndexStart To rowIndexStart + NumRows - 1
+       issuerName = Sheet1.Cells(rowIndex, 1)
+       classTitle = Sheet1.Cells(rowIndex, 2)
+       cusip = Sheet1.Cells(rowIndex, 3)
+       value = Sheet1.Cells(rowIndex, 4)
+       sshPrnamt = Sheet1.Cells(rowIndex, 5)
+       sshPrnamtType = Sheet1.Cells(rowIndex, 6)
+
+       investmentDiscretion = Sheet1.Cells(rowIndex, 7)
+       otherManager = Sheet1.Cells(rowIndex, 8)
+       votingAuthoritySole = Sheet1.Cells(rowIndex, 9)
+       votingAuthorityShared = Sheet1.Cells(rowIndex, 10)
+       votingAuthorityNone = Sheet1.Cells(rowIndex, 11)
+
+       Write #1, infoTableTag
+       Write #1, issuerTag & issuerName & issuerTagEnd
+       Write #1, classTitleTag & classTitle & classTitleTagEnd
+       Write #1, cusipTag & cusip & cusipTagEnd
+       Write #1, valueTag & value & valueTagEnd
+       
+       Write #1, shrsOrPrnAmtTag
+       Write #1, sshPrnamtTag & sshPrnamt & sshPrnamtTagEnd               'Number of shares
+       Write #1, sshPrnamtTypeTag & sshPrnamtType & sshPrnamtTypeTagEnd   'SH or PRN
+       Write #1, shrsOrPrnAmtTagEnd
+       
+       Write #1, investmentDiscretionTag & investmentDiscretion & investmentDiscretionTagEnd
+       Write #1, otherManagerTag & otherManager & otherManagerTagEnd
+       Write #1, VotingAuthorityTag
+       Write #1, SoleTag & votingAuthoritySole & SoleTagEnd
+       Write #1, SharedTag & votingAuthorityShared & SharedTagEnd
+       Write #1, NoneTag & votingAuthorityNone & NoneTagEnd
+       Write #1, VotingAuthorityTagEnd
+       Write #1, infoTableTagEnd
+       Write #1, ""
+
+       ' Write #1, "<", issuerTag, ">", issuerName, "</", issuerTag, ">"
+
+    Next
+
+
+    Close #1
+
+End Sub
+
