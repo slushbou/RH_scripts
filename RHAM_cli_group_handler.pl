@@ -1,0 +1,18 @@
+#!/usr/bin/perl#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-##  Advent ProPort Client List Expander##  Description:#    This takes a Port group, such as master, and expands the#    list recursively.#    Future plans:  sort the list, check for duplicates, remove duplicates.#  (Though this is easily done in recent verisons of Excel.)##  Usage :  Need to have Perl installed#   Set paths to files:#    $path_cli#    $path_grp#   Set name of input group file, e.g. "master"#   Set name of output file##   To run:  perl <this file name>##  (c) 2017  Round Hill Asset Management#  Author:  S.L.#  History:  2017-11-02   Created##  To Do:#  Remove debris#  Clean up file names & name construction#  Clean up TBD's##-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#package main;# use strict;use warnings;use io;
+# my $path_cli   = "H:\\Port\\cli\\";# my $path_grp   = "H:\\Port\\grp\\";
+# Use these files for development, temporarilymy $path_cli   = ".\\";my $path_grp   = ".\\grp\\";my $suffix_grp = ".grp";#
+# my $infile_nm_ori  = "geygan.grp";     # group file from Port# my $infile_nm_ori  = "bisb.grp";     # group file from Portmy $infile_nm_ori  = $path_grp . "master.grp";     # group file from Portmy $outfile_nm = "cli_list_temp.txt";
+my $file_name_grp = $path_grp . $infile_nm_ori;my $cli_name   = "dummy_cli";
+# Open files for reading & writing.  Probably master file.# TBD:  make file opening & reading into a subroutine to allow recursion.
+# Only one output fileopen(my $outfile_hnd, ">", $outfile_nm)  or die "Can't open output file: $!";
+# Multiple input files -- open within subsub readfile {
+    # open(my $infile_hnd,  "<", $infile_nm)   or die "Can't open input file: $!";    open(my $infile_hnd,  "<", @_ )   or die "Can't open input file: $!";
+ while (<$infile_hnd>) {   # assigns each line in turn to $_
+   # Read in line ;   my $line = $_ ;      # Skip lines at top of .grp file starting "$"   if (/^\$/)  { # don't write it to output file     print "\n $line \n";  # print "debug Top-of-grp-file \$comment case\n";   }      # Name of Group   elsif (/^@/)  {  # Remove '@' and try to open file with resulting name  print "\n debug @ case\n";  # $line =~  s/^@.+/.+/ ;  $line =~  s/@// ;  $line =~  s/\n// ;  print " line = $line / ";  $file_line_grp = $path_grp . $line . ".grp";        # debug  print " file_line_grp = $file_line_grp \n";    # $file_line_grp =  $file_line_grp . "\.grp";  # print " file_line_grp = $file_line_grp  \n";
+  # $file_name_grp =  $path_grp . $file_name_grp;        #debug  # print "file_name_group = " . $file_name_grp;    # TBD -- call this routine (recursively)  # Need file handles, infile name, outfile name for call.  # Outfile name is same temp file used at top level.  readfile ($file_line_grp);    # For now, just see if group file exists, and print its contents  # This assumes a group file just one deep, i.e., one nested group.#  open(my $infile_hnd2,  "<",  $file_line_grp) or die "Can't open input group file: $!";#  while (<$infile_hnd2>) {#    print $outfile_hnd $_ ;#  }#  close $infile_hnd2     }
+   # Normal case:  write Port code of client to output file   elsif (/\w/)  {      # \w signifies "word"         # TBD: check that Port code is valid  #  $_.cli exists in \cli\  print "debug Normal case\n";  # $line = $_ ;  # TBD: add trimming of line  print  $outfile_hnd  $line;   }
+   # Error case:  empty line or invalid Port code in .grp file   else  {  # TBD: check for errors  print "debug Error case";  $line = $_ ;  # TBD: add trimming of line  # Don't write it to output file.   }
+   }  # end while   close $infile_hnd  or die "$infile_hnd: $!";   }  # end sub readfile
+readfile($infile_nm_ori);
+# Sort resulting out list
+close $outfile_hnd or die "$outfile_hnd: $!";
