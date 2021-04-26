@@ -1,0 +1,327 @@
+Option Explicit 'Variables must be defined before use.
+
+' AllocationBatch Macro
+' Macro recorded 4/22/01 by Michael Ontiveros
+'
+' Keyboard Shortcut: Ctrl+m
+'
+Sub AllocationBatch()
+
+    On Error GoTo Command2_Err  'If crash, then do error routines at end of macro.
+
+    Const textdir = "H:\RHAM\TRADING\Allocs\Text\"  'Location of text output files from PORT.
+    Dim currentrow As Integer
+    Dim security As String
+    Dim toprocess As String
+    Dim errmsg2 As String
+
+    Workbooks.OpenText filename:="H:\RHAM\TRADING\Allocs\Text\ALLOLOG.TXT" _
+        , Origin:=xlWindows, StartRow:=1, DataType:=xlFixedWidth, _
+        FieldInfo:=Array(0, 1)  'This file contains a PORT generated list of text files to be processed.
+    
+    currentrow = 1  'file names are in column 1, beginning in row 1.
+    Do While Cells(currentrow, 1).VALUE <> ""
+        security = Cells(currentrow, 1).VALUE  'the name of the text file/security to be processed
+        toprocess = textdir & security         'with the appropriate directory prefix
+        Application.ScreenUpdating = False     'Not updating screen allows batch to be processed faster.
+'       Open text file with appropriate column separators.
+        Workbooks.OpenText filename:=toprocess, _
+            Origin:=xlWindows, StartRow:=1, DataType:=xlFixedWidth, _
+            FieldInfo:=Array(Array(0, 1), Array(10, 1), Array(27, 1), Array(38, 1), _
+            Array(52, 1), Array(64, 1), Array(72, 1), Array(84, 1), Array(98, 1), Array( _
+            112, 1), Array(120, 1), Array(126, 1), Array(134, 1), Array(142, 1), Array(150 _
+            , 1), Array(162, 1), Array(174, 1), Array(186, 1), Array(198, 1), Array(210, 1), Array(222, 1), _
+            Array(234, 1), Array(246, 1), Array(258, 1), Array(270, 1), Array(282, 1), Array(285, 1), Array(288, 1))
+        
+        
+'   This function gives the $10 and $15 dollar comm  for schwab
+
+    Range("I3").Select
+    ActiveCell.FormulaR1C1 = _
+        "=IF(R[1]C[-6]=""#0804-7764"",CONCATENATE(""$10= "",ROUNDDOWN(1000/R[5]C[-7],0)),"""")"
+    Range("I3").Select
+    ActiveCell.FormulaR1C1 = _
+        "=IF(R[1]C[-6]=""#0804-7764"",CONCATENATE(""$10= "",ROUNDDOWN(1000/R[5]C[-7],0)),"""")"
+    Range("J3").Select
+    ActiveCell.FormulaR1C1 = _
+        "=IF(R[1]C[-7]=""#0804-7764"",CONCATENATE(""$15= "",ROUNDDOWN(3000/R[5]C[-8],0)),"""")"
+    Range("J4").Select
+
+        
+        
+        AllocationPrintout  'Call and execute AllocationPrintout macro on this text file
+        ActiveWorkbook.Close  'Close the (now) Excel file created from the text file.
+        currentrow = currentrow + 1  'Increment to read in next text file
+        Application.ScreenUpdating = True  'Set to true so user can see movement to next cell in ALLOLOG.TXT.
+        Cells(currentrow, 1).Select  'Select next cell in column 1 of ALLOLOG.TXT.
+    Loop
+    Workbooks("ALLOLOG.TXT").Close
+    Kill "H:\RHAM\TRADING\Allocs\Text\ALLOLOG.TXT"  'Delete this file so that PORT writes to clean file for next batch.
+
+    On Error GoTo 0  'Disable error handling.
+Command2_Exit:
+    Exit Sub
+
+Command2_Err:
+    Application.ScreenUpdating = True  'Set to true so screen is returned to user's control.
+    errmsg2 = "AllocationBatch macro failed for " & toprocess
+    MsgBox errmsg2, vbOKOnly + vbCritical, "Error!"
+    On Error GoTo 0  'Disable error handling.
+    Resume Command2_Exit
+End Sub
+
+Function Min(ByVal Val1 As Variant, ByVal Val2 As Variant) As Variant
+    If Val1 < Val2 Then
+        Min = Val1
+    Else
+        Min = Val2
+    End If
+End Function
+
+Function Max(ByVal Val1 As Variant, ByVal Val2 As Variant) As Variant
+    If Val1 > Val2 Then
+        Max = Val1
+    Else
+        Max = Val2
+    End If
+End Function
+
+Function Round(ByVal VALUE As Variant, ByVal Decimals As Integer) As Variant
+' The Round function rounds Value to the specified Decimals place.
+' To round to the hundredths place, Decimals = 2.
+' To round to the hundreds place, Decimals = -2.
+' To round to the nearest integer, Decimals = 0.
+' Round(-x, n) = - Round(x, n)
+    Dim sign As Integer
+    If VALUE > 0 Then
+        sign = 1
+    ElseIf VALUE = 0 Then
+        sign = 0
+    Else
+        sign = -1
+    End If
+    VALUE = Abs(VALUE)
+    Round = sign * Int(VALUE * 10 ^ Decimals + 0.5) / 10 ^ Decimals
+End Function
+
+
+
+Function EasterDate(ByVal iYear As Integer) As Integer
+
+' EASTER DATE CALCULATION FOR YEARS 1583 TO 4099
+
+' iYear is a 4 digit year 1583 to 4099
+' EasterDate = 100*m + d
+' d returns the day of the month of Easter
+' m returns the month of Easter
+
+' Easter Sunday is the Sunday following the Paschal Full Moon
+' (PFM) date for the year
+
+' This algorithm is an arithmetic interpretation of the 3 step
+' Easter Dating Method developed by Ron Mallen 1985, as a vast
+' improvement on the method described in the Common Prayer Book
+
+' Because this algorithm is a direct translation of the
+' official tables, it can be easily proved to be 100% correct
+
+' This algorithm derives values by sequential inter-dependent
+' calculations, so ... DO NOT MODIFY THE ORDER OF CALCULATIONS!
+
+' The \ operator may be unfamiliar - it means integer division
+' for example, 30 \ 7 = 4 (the remainder is ignored)
+
+' All variables are integer data types
+
+' It's free!  Please do not modify code or comments!
+' --> Sorry buddy, made one minor modification (see "MCO modification" below).
+' ==========================================================
+
+    Dim FirstDig As Integer, Remain19 As Integer, temp As Integer    'intermediate results
+    Dim tA As Integer, tB As Integer, tC As Integer, tD As Integer, tE As Integer          'table A to E results
+    Dim d As Integer, m As Integer
+
+    FirstDig = iYear \ 100              'first 2 digits of iYear
+    Remain19 = iYear Mod 19             'remainder of iYear / 19
+
+    'calculate PFM date
+    temp = (FirstDig - 15) \ 2 + 202 - 11 * Remain19
+'   FirstDig <= 26 ==> subract zero; 26 < FirstDig <=38 ==> subtract one; FirstDig > 38 ==> subtract two.
+    If FirstDig > 26 Then temp = temp - 1
+    If FirstDig > 38 Then temp = temp - 1
+
+    'this next line uses underscore (_) line continuation characters
+    'in older versions of VB you may need to revert to one long line
+    If ((FirstDig = 21) Or (FirstDig = 24) Or (FirstDig = 25) _
+        Or (FirstDig = 33) Or (FirstDig = 36) Or (FirstDig = 37)) _
+        Then temp = temp - 1
+
+    temp = temp Mod 30
+
+    tA = temp + 21
+    If temp = 29 Then tA = tA - 1
+    If (temp = 28 And Remain19 > 10) Then tA = tA - 1
+
+    'find the next Sunday
+    tB = (tA - 19) Mod 7
+
+    tC = (40 - FirstDig) Mod 4
+    If tC = 3 Then tC = tC + 1
+    If tC > 1 Then tC = tC + 1
+
+    temp = iYear Mod 100
+    tD = (temp + temp \ 4) Mod 7
+
+    tE = ((20 - tB - tC - tD) Mod 7) + 1
+    d = tA + tE
+
+    'return the date
+    If d > 31 Then
+        d = d - 31
+        m = 4
+    Else
+        m = 3
+    End If
+
+'   MCO modification: function returns m and d as one value rather than two separate values.
+    EasterDate = 100 * m + d
+
+End Function
+
+'   Input a four-digit year.
+'   Output Good Friday as 100*(Good Friday Month) + Good Friday Day.
+Function GoodFriday(ByVal iYear As Integer) As Integer
+    Dim Easter As Integer
+    Easter = EasterDate(iYear)
+    If Easter < 322 Or Easter > 425 Then
+        GoodFriday = -1
+    ElseIf Easter = 401 Or Easter = 402 Then
+        GoodFriday = 331 + (Easter - 402)
+    Else
+        GoodFriday = Easter - 2
+    End If
+End Function
+
+'   Given the interest frequency & maturity date for a particular bond, this
+'   function returns the number of interest days until the settlement date,
+'   since the ex-interest date.
+Function IntDays(ByVal freq As Integer, ByVal maturity As Date, ByVal settlement As Date) As Integer
+
+    Dim MatMonth As Integer
+    Dim MatDay As Integer
+    Dim SetMonth As Integer
+    Dim SetDay As Integer
+    Dim FirstMonth As Integer
+    Dim ExIntMonth As Integer
+    Dim ExIntDay As Integer
+
+    MatMonth = Month(maturity)
+    MatDay = Day(maturity)
+    SetMonth = Month(settlement)
+    SetDay = Day(settlement)
+
+'   Map the 31st to the 30th for all months, and map the last day of February to the 30th for the Maturity Date.
+    If (MatMonth = 2 And ((Year(maturity) Mod 4 > 0 And MatDay = 28) Or MatDay = 29)) Or (MatDay = 31) Then MatDay = 30
+    If SetDay = 31 Then SetDay = 30
+
+    FirstMonth = MatMonth
+    Do While FirstMonth < 13
+        FirstMonth = FirstMonth + 12 / freq
+    Loop
+    FirstMonth = FirstMonth - 12  'Determine the first month of the year during which the bond pays interest.
+    ExIntMonth = FirstMonth
+    ExIntDay = MatDay
+    If ExIntMonth = 2 And ExIntDay = 30 Then  'Avoid referring to ficticious February days for the Ex-Interest Date
+        If Year(settlement) Mod 4 = 0 Then ExIntDay = 29 Else ExIntDay = 28
+    End If
+
+'   Find the first interest date that occurs AFTER the Settlement Date.  Call the month of this date "NEXT".
+'   The Ex-Interest Month will be the first interest month preceding "NEXT".
+    Do Until 100 * SetMonth + SetDay < 100 * ExIntMonth + ExIntDay
+        ExIntMonth = ExIntMonth + 12 / freq
+        ExIntDay = MatDay
+        If ExIntMonth = 2 And ExIntDay = 30 Then
+            If Year(settlement) Mod 4 = 0 Then ExIntDay = 29 Else ExIntDay = 28
+        End If
+    Loop
+    
+'   If "NEXT" = FirstMonth, then Ex-Interest Month is the last interest month (of the previous year).
+'   Otherwise, Ex-Interest Month is the first interest month preceding "NEXT".
+    If ExIntMonth = FirstMonth Then
+        ExIntMonth = FirstMonth + (freq - 1) * (12 / freq)
+    Else
+        ExIntMonth = ExIntMonth - 12 / freq
+    End If
+    ExIntDay = MatDay
+'   Map the 30th of February to the actual end of February when Settlement Month = Ex-Interest Month = February.
+'   This prevents erroneous negative results for IntDays.
+    If ExIntMonth = 2 And ExIntDay = 30 And SetMonth = ExIntMonth Then
+        If Year(settlement) Mod 4 = 0 Then ExIntDay = 29 Else ExIntDay = 28
+    End If
+
+    If SetMonth < ExIntMonth Then SetMonth = SetMonth + 12  'Ex-Interest Month was in the previous year.
+    IntDays = (30 - ExIntDay) + 30 * (SetMonth - ExIntMonth - 1) + SetDay
+End Function
+
+'   This function determines the settle date of a trade given the trade date.
+Function SettleDate(ByVal TradeDate As Date) As Date
+    
+    Dim iMonth As Integer
+    Dim holiday As Date
+    Dim busdays As Integer
+
+'   Find the holiday which might affect the settlement date calculation
+    iMonth = Month(TradeDate)
+    Select Case iMonth
+        Case 1  'Martin Luther King, Jr. Day (3rd Monday of January)
+            holiday = DateSerial(Year(TradeDate), 1, DayOfMonth(3, 2, 1, Year(TradeDate)))
+        Case 2  'Washinton's Birthday / President's Day (3rd Monday of February)
+            holiday = DateSerial(Year(TradeDate), 2, DayOfMonth(3, 2, 2, Year(TradeDate)))
+        Case Is = 3, Is = 4  'Good Friday (Friday before Easter, use GoodFriday function)
+            holiday = DateSerial(Year(TradeDate), GoodFriday(Year(TradeDate)) \ 100, GoodFriday(Year(TradeDate)) Mod 100)
+        Case 5  'Memorial Day (Last Monday in May)
+            holiday = DateSerial(Year(TradeDate), 5, 31 - ((Weekday(DateSerial(Year(TradeDate), 5, 31)) - 2) Mod 7))
+        Case Is = 6, Is = 7  'Independence Day (July 4th).  NOTE: FRI. <-- SAT., SUN. --> MON. NOT ENABLED.
+            holiday = DateSerial(Year(TradeDate), 7, 4)
+        Case Is = 8, Is = 9  'Labor Day (1st Monday of September)
+            holiday = DateSerial(Year(TradeDate), 9, DayOfMonth(1, 2, 9, Year(TradeDate)))
+        Case 10  'Columbus Day (2nd Monday of October)
+            holiday = DateSerial(Year(TradeDate), 10, DayOfMonth(2, 2, 10, Year(TradeDate)))
+        Case 11
+            If TradeDate < DateSerial(Year(TradeDate), 11, 13) Then ' If 11th is a Sunday, Veterans Day moves to 12th, so use 13th of November here.
+                holiday = DateSerial(Year(TradeDate), 11, 11) 'Veterans Day (November 11th).  NOTE: FRI. <-- SAT., SUN. --> MON. NOT ENABLED.
+            Else
+                holiday = DateSerial(Year(TradeDate), 11, DayOfMonth(4, 5, 11, Year(TradeDate)))  'Thanksgiving Day (4th Thursday in November)
+            End If
+        Case Else  'NOTE: FRI. <-- SAT., SUN. --> MON. NOT ENABLED.  Some institutions declare the Fri. before or the Mon. after a weekend X-mas a holiday.
+            If TradeDate < DateSerial(Year(TradeDate), 12, 25) Then  'Christmas (December 25th)
+                holiday = DateSerial(Year(TradeDate), 12, 25)
+            Else
+                holiday = DateSerial(Year(TradeDate) + 1, 1, 1)  'New Year's Day of the following year (January 1st)
+            End If
+    End Select
+        
+    busdays = 0
+    SettleDate = TradeDate
+    Do While busdays < 3
+        SettleDate = SettleDate + 1
+        If Weekday(SettleDate) <> 1 And Weekday(SettleDate) <> 7 And SettleDate <> holiday Then  'Skip weekends and holidays.
+            busdays = busdays + 1
+        End If
+    Loop
+
+End Function
+
+'   This function returns the day of the month on which the "nth" weekday of month/year occurs.
+'   For example, Thanksgiving (4th Thursday of November) 2001 = DayOfMonth(4, 5, 11, 2001) = 22.
+Function DayOfMonth(ByVal Ordinal As Integer, ByVal iWeekday As Integer, ByVal iMonth As Integer, ByVal iYear As Integer) As Integer
+    If Weekday(DateSerial(iYear, iMonth, 1)) <= iWeekday Then Ordinal = Ordinal - 1
+    DayOfMonth = 1 + iWeekday - Weekday(DateSerial(iYear, iMonth, 1)) + Ordinal * 7
+End Function
+
+'   This function returns the prorated interest rate applied to principals in calculating bond trade interest due.
+Function ProRate(ByVal vCoupon As Variant, ByVal maturity As Date, ByVal frequency As Integer, ByVal TradeDate As Date) As Variant
+    Dim settlement As Date
+    settlement = SettleDate(TradeDate)
+    ProRate = Round(vCoupon * IntDays(frequency, maturity, settlement) / 360, 5)
+End Function
