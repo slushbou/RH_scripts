@@ -1,0 +1,1045 @@
+Option Explicit  'Variables must be defined before use.
+
+' The following conditions are necessary for the Allocation Printout/Fax macros to acccount for column sizes properly.
+' My Computer - Settings - Active Desktop - Customize My Desktop (Display Properties) - Settings - Advanced -
+'    (SiS 620 Properties) - Display Modes - Fonts = Small Fonts.
+' Excel - Tools - Options - General - Standard Font = Courier
+' Excel - Tools - Options - General - Standard Size = 10
+
+
+
+' AllocationPrintout Macro
+' Macro recorded 4/16/01 by Michael Ontiveros
+'
+' Keyboard Shortcut: Ctrl+Shift+A
+'
+' Use Tools-References: Visual Basic for Applications, Microsoft Excel 5.0 Object Library
+' Makes use of the Microsoft Scripting Runtime (scrrun.dll) Library, so be sure to include
+' - Go to Tool, References and check the appropriate box.  Located in c:\WINDOWS\SYSTEM\.
+
+Sub AllocationPrintout()
+
+    On Error GoTo Command1_Err  'If crash, then do error routines at end of macro.
+
+    Const allocdir = "H:\RHAM\TRADING\Allocs\"  'Directory to which Excel formatted versions will be saved
+
+    [Z4] = [G1]  'Move CUSIP to new location for later use in the AllocationFax() macro
+    [G1].ClearContents
+    If [B6] Like "* M" Then
+        [Z1] = [B1]  'Move bond maturity to new location for later use in the AllocationFax() macro
+        [Z1].NumberFormat = "mm/dd/yy"
+        [Z2] = [C1]  'Move bond coupon to new location for later use in the AllocationFax() macro
+        [Z3] = Right([A4], Len([A4]) - 5) 'Move bond frequency to new location for later use in the AllocationFax() macro
+        [B1].ClearContents
+        [C1].ClearContents
+        [A4].ClearContents
+    End If
+
+    '  Define variables.
+    Dim lastrow As Long
+    Dim sumrow As Integer
+    Dim lastcol As Integer
+    Dim zoompct As Integer
+    Dim sorttag_1 As String
+    Dim sorttag_2 As String
+    Dim sortcol_1 As Integer
+    Dim sortcol_2 As Integer
+    Dim bonddef As String
+    Dim secname As String
+    Dim filename As String
+    Dim faxname As String
+    Dim rng As Variant
+    Dim oFS As Object
+    Dim errmsg1 As String
+
+    '  Find last row (number) and sum row (number).
+    [A12].End(xlDown).Select
+    lastrow = ActiveCell.Row
+    If lastrow > 10000 Then  'If only one account, End(xlDown) goes to bottom of spreadsheet.
+        lastrow = 12
+    End If
+    sumrow = lastrow + 2
+
+    [A1].Select  'Go to this cell now so the first row is not hidden.  Don't know why, but occurs for "small" groups.
+    
+    '  Determine and color blue the sorting columns by reading PORT flag printed in cell A1.
+    '  Make primary sort bold.
+    sorttag_1 = Left([A1], 1)
+    sorttag_2 = Right([A1], 1)
+    bonddef = "no"
+    '  Primary Sort Column
+    If sorttag_1 = "b" Then  'bond % sort
+        sortcol_1 = 14
+        bonddef = "yes"  '  Turn on switch to do "Bond % Deficit" column instead of "Curr. Comb. %" column
+        Range(Cells(9, 14), Cells(10, 14)).Font.ColorIndex = 5 'Color me blue.
+        Range(Cells(9, 14), Cells(10, 14)).Font.Bold = True
+    ElseIf sorttag_1 = "c" Then  'cash % sort
+        sortcol_1 = 13
+        Range(Cells(9, 13), Cells(10, 13)).Font.ColorIndex = 5 'Color me blue.
+        Range(Cells(9, 13), Cells(10, 13)).Font.Bold = True
+    ElseIf sorttag_1 = "a" Then  'alphabetical sort
+        sortcol_1 = 1
+        [A10].Font.ColorIndex = 5 'Color me blue.
+        [A10].Font.Bold = True
+    ElseIf sorttag_1 = "p" Then  'Curr. Pct. sort
+        sortcol_1 = 6
+        Range(Cells(8, 6), Cells(9, 6)).Font.ColorIndex = 5 'Color me blue.
+        Range(Cells(8, 6), Cells(9, 6)).Font.Bold = True
+    ElseIf sorttag_1 = "n" Then  'no sort
+        sortcol_1 = 9999
+    Else 'CTL % sort
+        sortcol_1 = 14
+        Range(Cells(9, 14), Cells(10, 14)).Font.ColorIndex = 5 'Color me blue.
+        Range(Cells(9, 14), Cells(10, 14)).Font.Bold = True
+    End If
+    '  Secondary Sort Column
+    If sorttag_2 = "b" Then  'bond % sort
+        sortcol_2 = 14
+        bonddef = "yes"  '  Turn on switch to do "Bond % Deficit" column instead of "Curr. Comb. %" column
+        Range(Cells(9, 14), Cells(10, 14)).Font.ColorIndex = 5 'Color me blue.
+    ElseIf sorttag_2 = "t" Then  'CTL % sort
+        sortcol_2 = 14
+        Range(Cells(9, 14), Cells(10, 14)).Font.ColorIndex = 5 'Color me blue.
+    ElseIf sorttag_2 = "a" Then  'alphabetical sort
+        sortcol_2 = 1
+        [A10].Font.ColorIndex = 5 'Color me blue.
+    ElseIf sorttag_2 = "p" Then  'Curr. Pct. sort
+        sortcol_2 = 6
+        Range(Cells(8, 6), Cells(9, 6)).Font.ColorIndex = 5 'Color me blue.
+    ElseIf sorttag_2 = "n" Then  'no sort
+        sortcol_2 = 9999
+    Else 'cash % sort
+        sortcol_2 = 13
+        Range(Cells(9, 13), Cells(10, 13)).Font.ColorIndex = 5 'Color me blue.
+    End If
+    [A1].ClearContents
+
+    '  Determine how many cross reference columns to include (if any) and how much to scale down to fit to 1 or 2 pages wide.
+    '  Note:  Allocations with 3 or more cross-references are now treated like an allocation with 10 cross-references,
+    '         because scaling allocations with more than two cross-references down to a single page makes them too difficult too read.
+    '         That's why Cells S8-Y8 have been replaced with R8 in the ElseIf conditions below.
+    If [P8] = "No X-Ref1" Then
+        lastcol = 15
+        zoompct = 88
+    ElseIf [Q8] = "No X-Ref2" Then
+        lastcol = 16
+        zoompct = 84
+    ElseIf [R8] = "No X-Ref3" Then
+        lastcol = 17
+        zoompct = 80
+    ElseIf [R8] = "No X-Ref4" Then
+        lastcol = 18
+        zoompct = 77
+    ElseIf [R8] = "No X-Ref5" Then
+        lastcol = 19
+        zoompct = 80
+    ElseIf [R8] = "No X-Ref6" Then
+        lastcol = 20
+        zoompct = 77
+    ElseIf [R8] = "No X-Ref7" Then
+        lastcol = 21
+        zoompct = 77
+    ElseIf [R8] = "No X-Ref8" Then
+        lastcol = 22
+        zoompct = 77
+    ElseIf [R8] = "No X-Ref9" Then
+        lastcol = 23
+        zoompct = 77
+    ElseIf [R8] = "No X-Ref10" Then
+        lastcol = 24
+        zoompct = 77
+    Else
+        lastcol = 25
+        zoompct = 77
+    End If
+
+    filename = ActiveSheet.Name  'Create filename,
+    filename = allocdir & filename & ".xlsx" 'with appropriate path and extension.
+    faxname = ActiveSheet.Name  'Create name for a duplicate sheet
+    faxname = faxname & " DUP"    'by appending " DUP" to the allocation sheet name.
+
+    With Cells.Font
+        .Name = "Times New Roman"
+        .Size = 10
+    End With
+
+    '  Get security name from Cell AB1 and bond info (if any) from Cells Z1, Z2, and Z3.
+    secname = [AB1]
+    Dim bondmat As String
+    Dim bondcoup As String
+    '  Tack on coupon and maturity to secname, for bonds only.
+    If [B6] Like "* M" Then
+        If [Z1] <> "" Then
+            bondmat = CStr(Format([Z1], "mm/dd/yy"))
+        Else
+            bondmat = "??/??/??"
+        End If
+        If [Z2] <> "" Then
+            '  Keep at least two decimal places.
+            If [Z2] = Int([Z2]) Then
+                bondcoup = " " & CStr([Z2]) & ".00"
+            ElseIf 10 * [Z2] = Int(10 * [Z2]) Then
+                bondcoup = " " & CStr([Z2]) & "0"
+            Else
+                bondcoup = " " & CStr([Z2])
+            End If
+        Else
+            bondcoup = " ?.??"
+        End If
+        [N2] = [Z3] & " Interest Payments Per Year"
+        secname = secname & bondcoup & "% Due " & bondmat
+    End If
+    [B2] = secname
+    Range("C2:H2").ClearContents
+
+    [B5] = Date
+    [B5].NumberFormat = "mm/dd/yy"
+
+    Range(Cells(11, 1), Cells(11, 28)).ClearContents  'Remove "underline" dash marks used by PORT.
+    Range(Cells(10, 1), Cells(10, 28)).Borders(xlBottom).Weight = xlThin  'Underline title cells.
+    Range("P7:R7").ClearContents  'Remove "underline" dash marks used by PORT.
+    Range("P6:R6").Borders(xlBottom).Weight = xlThin  'Underline "CROSS REFERENCE SECURITIES".
+    Range("B8,P10:Y10").NumberFormat = "0.0000"  'Format allocated and cross-reference prices.
+    Range(Cells(12, 3), Cells(sumrow, 5)).NumberFormat = "#,##0"  'Format Columns C-E to whole numbers with commas.
+    Range(Cells(12, 7), Cells(sumrow, 9)).NumberFormat = "#,##0_);[Red](#,##0)"  'Format Columns G-I to whole numbers with _
+        (red) for negative quantity.
+    Range(Cells(12, 15), Cells(sumrow, 27)).NumberFormat = "#,##0"  'Format Columns O-Y to whole numbers with commas.
+
+    [C12].Select
+    ActiveWindow.FreezePanes = True
+
+    Range(Cells(sumrow - 1, 1), Cells(sumrow - 1, 25)).ClearContents  'Remove "underline" dash marks used by PORT.
+    Range(Cells(sumrow + 1, 1), Cells(sumrow + 1, 25)).ClearContents  'Remove "underline" dash marks used by PORT.
+
+    '  Format upper border (thin) and lower border (double) for sum row cells which will contain values.
+    Range(Cells(sumrow, 3), Cells(sumrow, 9)).Select
+    Selection.Borders(xlTop).Weight = xlThin
+    Selection.Borders(xlBottom).LineStyle = xlDouble
+    Range(Cells(sumrow, 12), Cells(sumrow, 14)).Select
+    Selection.Borders(xlTop).Weight = xlThin
+    Selection.Borders(xlBottom).LineStyle = xlDouble
+    Range(Cells(sumrow, 16), Cells(sumrow, 27)).Select
+    Selection.Borders(xlTop).Weight = xlThin
+    Selection.Borders(xlBottom).LineStyle = xlDouble
+
+    Range(Cells(12, 1), Cells(lastrow, 1)).Select  'Capitalize PORT account codes.
+    For Each rng In Selection
+        rng.VALUE = UCase(rng.VALUE)
+    Next rng
+
+    [C12].Select  'Go to "Quantity" cell of first account - Final cursor location on allocation sheet.
+
+    '   Between 11AM and 2:15PM, allocate sales with Cumulative Total To Buy (to determine executed order total-to-line).
+    '   Otherwise, allocate sales with Cumulative Total To Sell (to determine sale order total-to-line).
+    If [B6] Like "SOLD *" And (Hour(Now) + Minute(Now) / 60 < 11 Or Hour(Now) + Minute(Now) / 60 > 14.25) Then
+        [O12].FormulaR1C1 = "=SUM(R12C5:RC5)"  'Cumulative Total To Sell
+        [O10] = "To Sell"
+    Else
+        [O12].FormulaR1C1 = "=SUM(R12C3:RC3)"  'Cumulative Total To Buy
+        If [B6] Like "SOLD *" Then [O10] = "Sold"
+    End If
+    If lastrow > 12 Then  'FillDown fails for only one account.
+        Range(Cells(12, 15), Cells(lastrow, 15)).FillDown  'Enter "Cumulative Total To Buy/Sell" for all accounts.
+    End If
+
+    '  Populate Column Z with a 1 for accounts with shares of the allocated security to sell
+    '  and a 0 for accounts with no shares to sell
+    [Z6] = "Shares Of"
+    [Z7] = "Allocated"
+    [Z8] = "Security"
+    [Z9] = "To Sell?"
+    [Z10] = "1=Yes, 0=No"
+    [Z12].FormulaR1C1 = "=IF(RC[-21]<>0,1,0)"
+    If lastrow > 12 Then  'FillDown fails for only one account.
+        Range(Cells(12, 26), Cells(lastrow, 26)).FillDown  'Enter Shares To Sell for all accounts.
+    End If
+    
+    '  Populate Column AA with a 1 for invested accounts and a 0 for non-invested accounts
+    [AA6] = "Invested"
+    [AA7] = "Status,"
+    [AA8] = "X-Refs"
+    [AA9] = "Included"
+    [AA10] = "1=Yes, 0=No"
+    [AA12].FormulaR1C1 = "=IF(RC[-21]<>0,1,0)"
+    If lastrow > 12 Then  'FillDown fails for only one account.
+        Range(Cells(12, 27), Cells(lastrow, 27)).FillDown  'Enter Invested Status for all accounts.
+    End If
+
+    '  Enter formulas for the sum row
+    Range(Cells(sumrow, 3), Cells(sumrow, 5)).FormulaR1C1 = "=SUM(R12C:R[-2]C)"
+    Cells(sumrow, 6).FormulaR1C1 = "=SUMPRODUCT(R12C4:R[-2]C4,R12C6:R[-2]C6)/RC4"  'Calculates group Curr. Pct.
+    Range(Cells(sumrow, 7), Cells(sumrow, 9)).FormulaR1C1 = "=SUM(R12C:R[-2]C)"
+    Range(Cells(sumrow, 12), Cells(sumrow, 13)).FormulaR1C1 = "=SUMPRODUCT(R12C4:R[-2]C4,R12C:R[-2]C)/RC4"  'Calculates group bond and cash percent.
+    Cells(sumrow, 14).FormulaR1C1 = "=RC[-1]+RC[-2]"  'Calculates combined percent.
+    Range(Cells(sumrow, 16), Cells(sumrow, 27)).FormulaR1C1 = "=SUM(R12C:R[-2]C)"
+
+    Columns("A:B").HorizontalAlignment = xlLeft
+    Columns("C:AA").HorizontalAlignment = xlRight
+    Columns("AB:AB").HorizontalAlignment = xlCenter
+
+    Range("P6").HorizontalAlignment = xlLeft  'Left justify "CROSS", purely style choice, not necessary.
+    Range("Q6").HorizontalAlignment = xlCenter  'Center "REFERENCE", purely style choice, not necessary.
+    Range("AB1").HorizontalAlignment = xlLeft  'Left justify full security name, purely style choice, not necessary.
+
+    Columns("A:A").ColumnWidth = 6.75
+    Columns("B:B").ColumnWidth = 12
+    Columns("C:C").EntireColumn.AutoFit
+    Columns("D:D").ColumnWidth = 8.75
+    Columns("E:E").ColumnWidth = 9
+    Columns("F:G").EntireColumn.AutoFit
+    Columns("H:I").ColumnWidth = 8.25
+    Columns("J:J").EntireColumn.AutoFit
+    Columns("K:N").ColumnWidth = 8
+    Columns("O:AA").EntireColumn.AutoFit
+    Columns("AB:AB").ColumnWidth = 5
+
+    '  Do "Bond % Deficit" column for bond-sorted allocations or "% Available For Equities
+    '  Column" for CTL%-sorted allocations.
+    If bonddef = "yes" Then
+        [N9] = "Bond %"
+        [N10] = "Deficit"
+        If [B6] Like "BOT *" And [B4] = "MASTER ACCT." Then [C11] = "DON'T ALLOCATE TO MUNI ACCTS!!!"
+        [C11].HorizontalAlignment = xlCenter
+        [C11].Font.ColorIndex = 3  'Color me red.
+        [N12].FormulaR1C1 = "=RC[-3]-RC[-2]"  'Compute Bond % Deficit
+        If lastrow > 12 Then  'FillDown fails for only one account.
+            Range(Cells(12, 14), Cells(lastrow, 14)).FillDown  'Enter "Bond % defecit" for all accounts.
+        End If
+        Cells(sumrow, 14).FormulaR1C1 = "=SUMPRODUCT(R12C4:R[-2]C4,R12C14:R[-2]C14)/RC4"  'Calculates group "Bond % Defecit"
+    ElseIf sortcol_1 = 14 Or sortcol_2 = 14 Then
+        [N9] = "% Avail."
+        [N10] = "For Eq."
+        [N12].FormulaR1C1 = "=RC[-1]+RC[-2]-RC[-3]"  'Compute % Available for Equities
+        If lastrow > 12 Then  'FillDown fails for only one account.
+            Range(Cells(12, 14), Cells(lastrow, 14)).FillDown  'Enter "% Available For Equities" for all accounts.
+        End If
+        Cells(sumrow, 14).FormulaR1C1 = "=SUMPRODUCT(R12C4:R[-2]C4,R12C14:R[-2]C14)/RC4"  'Calculates group "% Av. For Eq."
+    End If
+
+    '  Sort using sortcol_1 & sortcol_2, ascending/descending depends on buy/sale and sort column.
+    If lastrow > 12 And sortcol_1 <> 9999 Then  'All multiple account allocations with at least one sort criterion.
+        If sortcol_1 = 1 Then  'All alphabetical primary sorts
+            Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(sortcol_1), Order1:= _
+            xlAscending, header:=xlNo
+        ElseIf [B6] Like "BOT *" Then  'All non-alphabetical buys
+            If sortcol_1 = 6 Then  'Buys with primary sort by Curr. Pct.
+                If sortcol_2 = 9999 Then  'No secondary sort
+                    Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(sortcol_1), Order1:= _
+                    xlAscending, header:=xlNo
+                Else
+                    Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(sortcol_1), Order1:= _
+                    xlAscending, Key2:=Columns(sortcol_2), Order2:=xlDescending, header:=xlNo
+                End If
+            ElseIf sortcol_2 = 6 Then  'Buys with secondary sort by Curr. Pct.
+                    Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(sortcol_1), Order1:= _
+                    xlDescending, Key2:=Columns(sortcol_2), Order2:=xlAscending, header:=xlNo
+            Else  'Buys with neither sort by Curr. Pct.
+                If sortcol_2 = 9999 Then  'No secondary sort
+                    Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(sortcol_1), Order1:= _
+                    xlDescending, header:=xlNo
+                Else
+                    Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(sortcol_1), Order1:= _
+                    xlDescending, Key2:=Columns(sortcol_2), Order2:=xlDescending, header:=xlNo
+                End If
+            End If
+        Else  'All non-alphabetical sales.  First sort Column Z descending to separate accounts _
+        which actually own shares from those that don't.
+            If sortcol_1 = 6 Then  'Sales with primary sort by Curr. Pct.
+                If sortcol_2 = 9999 Then  'No secondary sort
+                    Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(26), Order1:= _
+                    xlDescending, Key2:=Columns(sortcol_1), Order2:=xlDescending, header:=xlNo
+                Else
+                    Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(26), Order1:= _
+                    xlDescending, Key2:=Columns(sortcol_1), Order2:=xlDescending, _
+                    Key3:=Columns(sortcol_2), Order3:=xlAscending, header:=xlNo
+                End If
+            ElseIf sortcol_2 = 6 Then  'Sales with secondary sort by Curr. Pct.
+                Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(26), Order1:= _
+                xlDescending, Key2:=Columns(sortcol_1), Order2:=xlAscending, _
+                Key3:=Columns(sortcol_2), Order3:=xlDescending, header:=xlNo
+            Else  'Sales with neither sort by Curr. Pct.
+                If sortcol_2 = 9999 Then  'No secondary sort
+                    Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(26), Order1:= _
+                    xlDescending, Key2:=Columns(sortcol_1), Order2:=xlAscending, header:=xlNo
+                Else
+                    Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(26), Order1:= _
+                    xlDescending, Key2:=Columns(sortcol_1), Order2:=xlAscending, _
+                    Key3:=Columns(sortcol_2), Order3:=xlAscending, header:=xlNo
+                End If
+            End If
+        End If
+    End If
+
+    ActiveSheet.PageSetup.PrintArea = Range(Cells(1, 1), Cells(sumrow, lastcol)).Address
+    With ActiveSheet.PageSetup
+        .PrintTitleRows = "$1:$11"  'Print first 11 rows at the top of every page.
+        .CenterHeader = ""  'Remove any default center header.
+        .CenterFooter = "Page &P of &N"  'Center footer is Page X of TOTAL PAGES.
+        .Orientation = xlLandscape
+        .Zoom = zoompct  'Scale down to fit to one page wide.
+    End With
+
+'   For Schwab and Master Group allocations, insert a copy of the Commission Tag column
+'   before Column A.
+    If Right(ActiveSheet.Name, 2) = "SC" Or Right(ActiveSheet.Name, 2) = "sc" Or _
+    Right(ActiveSheet.Name, 2) = "MA" Or Right(ActiveSheet.Name, 2) = "ma" Then
+        Columns("AB:AB").Select
+        Selection.Copy
+        Columns("A:A").Select
+        Selection.Insert Shift:=xlToRight
+        [A1].ClearContents
+        [A9] = "C"
+        [A10] = "T"
+        Columns("A:A").Select
+        Selection.ColumnWidth = 1.5
+        [D12].Select
+    End If
+
+    ActiveSheet.Copy After:=ActiveSheet
+    ActiveSheet.Name = faxname
+
+    Set oFS = CreateObject("Scripting.FileSystemObject")
+    If oFS.FileExists(filename) Then Kill filename  'Delete old versions of allocation about to be saved.
+    Set oFS = Nothing  'Clear memory occupied by object variable
+    ActiveWorkbook.SaveAs filename:=filename, FileFormat:=xlOpenXMLWorkbook  'Always save file, in *.xlsx format.
+
+    On Error GoTo 0  'Disable error handling.
+Command1_Exit:
+    Exit Sub
+
+Command1_Err:
+    Application.ScreenUpdating = True  'If called from AllocationBatch macro, then need to update screen to unhide actions.
+    Set oFS = Nothing  'Free up memory for object variable.
+    errmsg1 = "AllocationPrintout macro failed for " & filename
+    MsgBox errmsg1, vbOKOnly + vbCritical, "Error!"
+    On Error GoTo 0  'Disable error handling.
+    Resume Command1_Exit
+End Sub
+
+' AllocationFax Macro
+' Macro recorded 4/16/01 by Michael Ontiveros
+'
+' Keyboard Shortcut: Ctrl+Shift+F
+'
+Sub AllocationFax()
+
+    Application.ScreenUpdating = False  'Do not update screen until end - not updating allows for faster speed.
+    On Error GoTo Command3_Err  'If crash, then do error routines at end of macro.
+    
+    '   Delete Column A if Column A contains a copy of the Commission Tag column.
+    If [A9] = "C" And [A10] = "T" Then
+        Columns("A:A").Select
+        Selection.Delete Shift:=xlToLeft
+        [C12].Select
+    End If
+    
+    '  Define variables
+    Dim filename As String
+    Dim charspot As Integer
+    
+    '  The following lines create the fax sheet by creating a renamed copy of the duplicate sheet.
+    filename = ActiveSheet.Name
+    charspot = InStr(1, filename, " ", 1)
+    If charspot Then filename = Mid(filename, 1, charspot - 1) 'Remove " DUP" from the name of the duplicate sheet.
+    filename = filename & " FAX" ' Append " FAX" to the name of the fax sheet.
+    ActiveSheet.Copy After:=ActiveSheet
+    ActiveSheet.Name = filename
+    
+    '  The following lines undo certain actions from the AllocationPrintout macro
+    [C12].Select
+    ActiveWindow.FreezePanes = False
+    [A12].Select
+    ActiveWindow.FreezePanes = True
+    [A10].Font.ColorIndex = 1 'Color me black.
+    
+    '  Define variables
+    Dim lastrow As Long
+    Dim sumrow As Integer
+    Dim lastcol As Integer
+    Dim commsched As String
+    Dim quantity As String
+    Dim counter As Integer
+    Dim schwcomm10 As Integer
+    Dim schwcomm15 As Integer
+
+    '  Clear off "DON'T ALLOCATE TO MUNI ACCTS!!!" note from bond-sorted Schwab allocations.
+    [C11].ClearContents
+    
+    '  Find last row (number) and sum row (number).
+    Range("A12").End(xlDown).Select
+    lastrow = ActiveCell.Row
+    If lastrow > 10000 Then  'Only one account, so End(xlDown) incorrectly goes to bottom of spreadsheet.  Correct this.
+        lastrow = 12
+    End If
+    sumrow = lastrow + 2
+
+    lastcol = 3  'Number of columns for which "separator" lines will be included between rows.  May be increased if _
+        commissions are included.
+
+    With Cells.Font
+        .Name = "Helv"
+        .Size = 12
+    End With
+    Cells.RowHeight = 20
+
+    '  Copy and security name for later placement in Cell E7
+    Dim secname As String
+    secname = "Security Description: " & [B2]
+    
+    '  Do fax "letterhead" and clear columns D through J, used later for trade info. and commission calculations.
+    Range("A1:E3").ClearContents
+    Range(Cells(1, 4), Cells(sumrow, 10)).ClearContents
+    [A1] = "ROUND HILL ASSET MANAGEMENT, INC."
+    [A2] = "PURCHASE/SALE ALLOCATION"
+    [A3] = "PHONE: (626) 431-2685  FAX: (626) 431-2661"
+    Range("A1:D3").HorizontalAlignment = xlCenterAcrossSelection
+    Range("A3:E3").Borders(xlBottom).Weight = xlThin  'Underline fax "letterhead".
+
+    Columns("A:A").ColumnWidth = 12
+    Columns("B:B").ColumnWidth = 21
+    Columns("C:C").ColumnWidth = 15
+    Columns("D:D").ColumnWidth = 13.75
+    Columns("E:E").ColumnWidth = 18
+
+    '  Copy trade info from B5:B8 (column) to B6:E6 (row).
+    [B8].Copy
+    [E6].Select
+    ActiveSheet.Paste
+    [B7].Copy
+    [D6].Select
+    ActiveSheet.Paste
+    [B6].Copy
+    [C6].Select
+    ActiveSheet.Paste
+    [B5].Copy
+    [B6].Select
+    ActiveSheet.Paste
+
+    Range("B5:E6").HorizontalAlignment = xlCenter  'Center trade information.
+    Range("B5:E6").Borders(xlBottom).Weight = xlThin  'Underline trade info. and trade info. headings.
+
+    [A10] = "CODE"
+    [B10] = "ACCOUNT NUMBER"
+    [C10] = "QUANTITY"
+
+    '  Format "Quantity" column to show commas.
+    '  Remove upper and lower border formats from sum row for the first 10 columns (remaining columns are never used in fax).
+    '  Underline sum row in Columns B and C.
+    '  Do these actions now, before the value of sumrow is changed to accomodate Schwab footnotes.
+    Range(Cells(12, 3), Cells(sumrow, 3)).NumberFormat = "#,##0"
+    Range(Cells(sumrow, 3), Cells(sumrow, 10)).Select
+    Selection.Borders(xlTop).LineStyle = xlNone
+    Selection.Borders(xlBottom).LineStyle = xlNone
+    Range(Cells(sumrow, 2), Cells(sumrow, 3)).Borders(xlBottom).LineStyle = xlDouble
+    
+    '  SCHWAB $10 AND $15 COMMISSIONS
+    If [B4] = "MASTER ACCT." Then  'Check if allocation is for Schwab accounts.
+        [E1] = "MASTER ACCT."
+        '  Copy Schwab Master Account number directly from PORT printout and paste to cell E2.
+        [C4].Copy
+        [E2].Select
+        ActiveSheet.Paste
+        Range("E1:E2").HorizontalAlignment = xlLeft
+        If Not ([C6] Like "* M") Then  'Do not do Schwab commission schedule for bonds.
+            
+            'In commission column (E), print only special $10 & $15 commissions, and only for
+            'accounts not subject to rate for households with aggregate value over $1 million.
+            [E12] = "=IF(OR(RC[23]=""S"",RC[23]=""s""),"""",IF(R6C5*RC[-2]<=1000,"""",IF(R6C5*RC[-2]<=3000,"""","""")))"
+
+            [F12] = "=IF(RC[-1]="""",0,RC[-1])"  'Column F is used only for computation.  Replace "" from Column E with zero.
+            If lastrow > 12 Then  'FillDown fails for only one account.
+                Range(Cells(12, 5), Cells(lastrow, 6)).FillDown
+            End If
+            Columns("F:F").EntireColumn.AutoFit  'Format to size only for screen viewing - not actually printed.
+            Range(Cells(12, 5), Cells(sumrow, 6)).NumberFormat = "#,##0.00"  'Format commission columns to two decimal places.
+            schwcomm10 = 0
+            schwcomm15 = 0
+            For counter = 12 To lastrow
+                If Cells(counter, 6) = 10 Then
+                    schwcomm10 = schwcomm10 + 1
+                ElseIf Cells(counter, 6) = 15 Then
+                    schwcomm15 = schwcomm15 + 1
+                End If
+            Next counter
+            If schwcomm10 + schwcomm15 > 0 Then  'Print headings/footnotes only if there is at least one special commision.
+                [E10] = "SPECIAL COMMISSIONS*"
+                lastcol = 5  'Increase to 5 so "separator" lines between accounts are extended to the commission column.
+                Range(Cells(sumrow + 1, 1), Cells(sumrow + 4, 5)).ClearContents
+                Cells(sumrow + 2, 1) = "* SEE NOTE ON MASTER ACCOUNT STAT SCREEN"
+                If schwcomm10 > 0 Then
+                    Cells(sumrow + 3, 1) = "  - $10.00 COMMISSIONS FOR TRADES WITH LESS THAN $1,000 PRINCIPAL"
+                    If schwcomm15 > 0 Then
+                        Cells(sumrow + 4, 1) = "  - $15.00 COMMISSIONS FOR TRADES WITH LESS THAN $3,000 PRINCIPAL"
+                        sumrow = sumrow + 4  'Increase by 4 so that the print area includes the commission footnotes.
+                    Else
+                        sumrow = sumrow + 3  'Increase by 3 so that the print area includes the commission footnotes.
+                    End If
+                Else
+                    Cells(sumrow + 3, 1) = "  - $15.00 COMMISSIONS FOR TRADES WITH LESS THAN $3,000 PRINCIPAL"
+                    sumrow = sumrow + 3  'Increase by 3 so that the print area includes the commission footnotes.
+                End If
+            End If
+        End If
+    End If
+    
+    '  SEAPORT COMMISSIONS
+    If [B12] Like "500-*" Or [B12] Like "C686-*" Then
+        If [C6] Like "* M" Then  'Do bond commissions for bond allocations.
+            '  Default answer is zero, data type is number.  Get commission rate.
+            [F10] = Application.InputBox(Prompt:="What is the bond commission per 1 M face value?  Enter zero to not compute commissions.", Default:=4, Type:=1)
+            Range(Cells(12, 5), Cells(sumrow, 5)).NumberFormat = "#,##0.00"  'Format commission column (E).
+            If [F10] > 0 Then
+                
+                '  Purely a style choice, info. seen only on screen.
+                [F10].NumberFormat = "$#,##0.00_);[Red]($#,##0.00)"
+                Columns("F:F").EntireColumn.AutoFit
+                [G10] = "per bond"
+                [G10].HorizontalAlignment = xlLeft
+                
+                [E10] = "SEAPORT COMMISSION"
+                [E12] = "=MAX(49,(RC[-2]*R10C6/1000))"  'Commission formula
+                If lastrow > 12 Then  'FillDown fails for only one account.
+                    Range(Cells(12, 5), Cells(lastrow, 5)).FillDown
+                End If
+                Cells(sumrow, 5) = "=SUM(R12C:R[-2]C)"  'Formula for commission total
+                Cells(sumrow, 5).Borders(xlBottom).LineStyle = xlDouble  'Underline commission total
+                lastcol = 5  'Increase to 5 so "separator" lines between accounts are extended to the commission column.
+            End If
+        Else  'Do Seaport stock commission schedule
+            [E10] = "SEAPORT COMMISSION"
+            commsched = InputBox("Hit [Enter] to compute commissions according to the Seaport mangaged group schedule, enter 'b' for the Bloomberg schedule, or enter 'n' for the Non-Managed group schedule.")
+            If commsched = "b" Or commsched = "B" Then  'Do Bloomberg commission schedule.
+                '  Bloomberg commission formula
+                [E12] = "=IF(R6C5*RC3<2000,59,IF(RC3<1000,68,MIN(0.03*R6C5*RC3,0.07*RC3)))"
+                If lastrow > 12 Then  'FillDown fails for only one account.
+                    Range(Cells(12, 5), Cells(lastrow, 5)).FillDown
+                End If
+                Range(Cells(12, 5), Cells(sumrow, 5)).NumberFormat = "#,##0.00"  'Format commission column (E).
+                Cells(sumrow, 5) = "=SUM(R12C:R[-2]C)"  'Formula for commission total
+                Cells(sumrow, 5).Borders(xlBottom).LineStyle = xlDouble  'Underline commission total
+                lastcol = 5  'Increase to 5 so "separator" lines between accounts are extended to the commission column.
+            Else  'Do Seaport managed or non-managed commission schedule.
+                
+                '  Purely a style choice.  Seen only on screen.
+                [F10] = "WATERHOUSE COMMISSION"
+                [F10].HorizontalAlignment = xlLeft
+                
+                '  Choose minimum commission to pay, and insert appropriate formula in commission column (E).
+                If commsched = "n" Or commsched = "N" Then
+                    [E12].FormulaR1C1 = "=TRUNC(MAX(59,0.375*RC6))"
+                Else
+                    [E12].FormulaR1C1 = "=TRUNC(MAX(49,0.3*RC6))"
+                End If
+                
+                '  Commission formula
+                [F12] = "=IF(R6C5*RC3<800,8.43+0.02696*(R6C5*RC3)+IF(R6C5<7.85,0.01*(R6C5*RC3),0.0785*RC3),RC[1])"
+                [G12] = "=IF(R6C5*RC3<2500,18.95+0.01685*(R6C5*RC3)+(0.0615*RC3),RC[1])"
+                [H12] = "=IF(R6C5*RC3<5000,31.31+0.01236*(R6C5*RC3)+(0.0615*RC3),IF(R6C5*RC3<20000,33.56+0.01236*(R6C5*RC3)+(0.0615*RC3),RC[1]))"
+                [I12] = "=IF(R6C5*RC3<30000,114.45+0.00843*(R6C5*RC3)+(0.0615*RC3),RC[1])"
+                [J12] = "=IF(R6C5*RC3<300000,199.84+0.00562*(R6C5*RC3)+(0.0615*RC3),1209.86+0.00225*(R6C5*RC3)+(0.0615*RC3))"
+                If lastrow > 12 Then  'FillDown fails for only one account.
+                    Range(Cells(12, 5), Cells(lastrow, 10)).FillDown
+                End If
+                Range(Cells(12, 5), Cells(sumrow, 10)).NumberFormat = "#,##0.00"  'Format commission column & its sources.
+                Cells(sumrow, 5) = "=SUM(R12C:R[-2]C)"  'Formula for commission total
+                Columns("F:J").ColumnWidth = 9.5
+                Cells(sumrow, 5).Borders(xlBottom).LineStyle = xlDouble  'Underline commission total
+                lastcol = 5  'Increase to 5 so "separator" lines between accounts are extended to the commission column.
+            End If
+        End If
+    End If
+    
+    '  SPECIAL COMMISSIONS AT SCHWAB FOR TICKER EEEE.
+    If [E1] = "MASTER ACCT." And [B7] = "csEEEE" Then
+        [E12] = "=IF(RC[-2]<=7500,0.01*RC[-2],IF(RC[-2]<=10000,75,IF(RC[-2]<=20000,100,200)))"
+        If lastrow > 12 Then  'FillDown fails for only one account.
+            Range(Cells(12, 5), Cells(lastrow, 5)).FillDown
+        End If
+        Range(Cells(12, 5), Cells(sumrow, 5)).NumberFormat = "#,##0.00"  'Format commission columns to two decimal places.
+        [E10] = "SPECIAL COMMISSIONS*"
+        Range(Cells(lastrow + 2 + 1, 1), Cells(lastrow + 2 + 3, 5)).ClearContents
+        Cells(lastrow + 2 + 2, 1) = "* SEE NOTE ON MASTER ACCOUNT STAT SCREEN"
+        Cells(lastrow + 2 + 3, 1) = "  - $10.00 COMMISSION PER $1,000 PRINCIPAL FOR TICKER EEEE"
+        lastcol = 5  'Increase to 5 so "separator" lines between accounts are extended to the commission column.
+        sumrow = lastrow + 5  'Change sumrow so that the print area includes the commission footnotes.
+    End If
+
+    
+    '  Do not clear cells B4, C4, or C8 until the data they contain has been moved to a new location.
+    '  Clear cells B4, C4, and C8 before the are populated with new values or text.
+    [A6] = "TRADE:"
+    Range("A4:C5").ClearContents
+    [B5] = "DATE"
+    [C5] = "ACTION"
+    [D5] = "TICKER"
+    If [C8] = "AVG PRI" Then
+        [E5] = "AVERAGE PRICE"
+    Else
+        [E5] = "PRICE"
+    End If
+    Range("A7:C9").ClearContents
+
+    '  The following block of code removes "TRADE" from A6 and separates "ACTION" cell into "BOT/SOLD" and "QUANTITY" cells
+    Range(Cells(5, 2), Cells(6, 3)).Copy
+    Range(Cells(5, 1), Cells(6, 2)).Select
+    ActiveSheet.Paste
+    [B5] = "BOT/SOLD"
+    [C5] = "QUANTITY"
+    quantity = [C6]
+    If [C6] Like "BOT*" Then
+        [B6] = "BOT"
+        [C6] = Mid(quantity, 5, 20)
+    Else
+        [B6] = "SOLD"
+        [C6] = Mid(quantity, 6, 20)
+    End If
+    [C6].NumberFormat = "#,##0"
+
+    '  Copy and Format Security Name Cell
+    [E7] = secname
+    [E7].Font.Size = 10
+    [E7].VerticalAlignment = xlTop
+    
+    Rows("8:9").EntireRow.Hidden = True  'These rows contain no data now, so don't print on fax.
+
+    '  Undo underlining in heading row for fax columns with no headings (after lastcol) and in all columns which may
+    '  have data used to generate allocation fax but are not printed on the fax (up to Column J, the 10th column).
+    Range(Cells(10, 1 + lastcol), Cells(10, 10)).Borders(xlBottom).LineStyle = xlNone
+
+    If lastrow > 12 Then  'Sort alphabetically by Account Code if there is more than one account on the allocation.
+        Range(Cells(12, 1), Cells(lastrow, 28)).Sort Key1:=Columns(1), Order1:= _
+            xlAscending, header:=xlNo
+    End If
+
+    '  Insert dashed "separator" lines between accounts.
+    Range(Cells(11, 1), Cells(lastrow, lastcol)).Borders(xlBottom).LineStyle = xlDash
+
+    ActiveSheet.PageSetup.PrintArea = Range(Cells(1, 1), Cells(sumrow, 5)).Address
+    With ActiveSheet.PageSetup
+        .Orientation = xlPortrait
+        .Zoom = 93  'Scale to fit to one page wide.
+    End With
+    [C12].Select  'Final cursor location.
+
+'   Shave off security type from symbol
+    Dim ty As String
+    ty = LCase(Left([D6], 2)) & space(1)
+    [D6] = Mid([D6], 3, Len([D6]) - 2)
+'   Verify that the security symbol is not more than eight characters long.
+    If Len([D6]) > 8 Then [D6] = Mid([D6], 1, 8)
+    
+    Application.ScreenUpdating = True  'Return to Update Screen mode now that the macro is finished.
+    On Error GoTo 0  'Disable error handling.
+    ActiveWorkbook.Save ' Save the workbook.
+
+
+'   THIS IS STILL PART OF THE ALLOCATIONFAX() MACRO!!!   ''''''''''''''
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'   Code from this line to the end of the macro writes transactions
+'   to the PORT Trade Blotter and to text files for exporting data to
+'   brokers.  The user is also given an opportunity to manually modify
+'   commissions for Schwab unlisted bond trades and all Seaport trades.
+
+    Const topost = "H:\Port\trn\topost.trn"  'Port trade blotter file
+'   The "allocschw" directory is placed directly under the server root directory (instead of
+'   under H:\08047764 or H:\Slwin) for easier access.  It's on the server for archive purposes.
+    Const schwdir = "H:\allocschw\"  'Directory where Schwab Web Trading imported allocations are stored.
+    Const ssbdir = "H:\RHAM\TRADING\Allocs\allocssb\"  'Directory where SSB X-TRA imported allocations are stored.
+
+    Dim intrate As Variant
+    Dim accrint As Variant
+    Dim accrint_txt As Variant
+    Dim action As String
+    Dim tdate As String
+    Dim sym As String
+    Dim rate As String
+    Dim brok As String
+    Dim response As Integer
+    Dim schwbndcom As Integer
+    Dim count As Integer
+    Dim message As String
+    Dim code As String
+    Dim qnty As String
+    Dim comnum As Variant
+    Dim comtxt As String
+    Dim tranline As String
+    Dim intline As String
+    ReDim PortArray(2 * (lastrow - 11)) As String
+    Dim iFileNum As Variant
+
+'   Calculate the prorated interest rate to apply to principal for this bond.
+    If [C6] Like "* M" And [Z1] * [Z2] * [Z3] > 0 Then  'Avoid errors caused by insufficient data.
+        intrate = ProRate([Z2], [Z1], [Z3], [A6])
+    Else
+        intrate = 0
+    End If
+
+    If [B6] = "BOT" Then
+        action = "by "
+    Else
+        action = "sl "
+    End If
+    
+    tdate = CStr(Format([A6], "mmddyy")) & space(1)
+    sym = LCase([D6])
+    rate = "@" & CStr([E6])
+    
+    If [B12] Like "####-####" Then
+        brok = "schw"
+    ElseIf [B12] Like "###-######-###" Then
+        brok = "ms"
+    ElseIf [B12] Like "500-*" Or [B12] Like "C686-*" Then
+        brok = "seap"
+    ElseIf [B12] Like "*-#####-##" Then
+        brok = "ubs"
+    ElseIf [B12] Like "WS-*" Then
+        brok = "wf"
+    ElseIf [B12] Like "AT-*" Then
+        brok = "amt"
+    ElseIf [B12] Like "RJ-*" Then
+        brok = "rj"
+    ElseIf [B12] Like "H*" Then
+        brok = "persh"
+    Else
+        brok = "ssb"
+    End If
+    
+    Dim schwfile As String
+    Dim schwfileh As String
+    Dim header As String
+    Dim schwline As String
+    Dim footer As String
+    ReDim SchwArray(lastrow - 11) As String
+'   Create filenames for the w/ header and w/o header Schwab Web Trading files.
+'   Create the header and footer lines for the Schwab Web Trading file
+    If brok = "schw" Then
+        schwfile = ActiveSheet.Name
+        charspot = InStr(1, schwfile, "_", 1)
+        If charspot Then schwfile = Mid(schwfile, 1, charspot - 1) 'Isolate the ticker.
+        schwfileh = schwdir & schwfile & "_h.txt"
+        schwfile = schwdir & schwfile & ".txt"
+        header = "EH," & CStr(Format([A6], "yyyymmdd")) & "," & Mid([E2], 2, 4) & Right([E2], 4) & "," & LCase(Left([B6], 1))
+        header = header & "," & LCase([D6]) & "," & [E6] & "," & CStr(Format([A6], "yyyymmdd"))
+        footer = "ET," & CStr(lastrow - 11) & "," & Cells(lastrow + 2, 3)
+    End If
+
+    Dim ssbfile As String
+    Dim ssbline As String
+    ReDim SSBArray(lastrow - 11) As String
+'   Create filename for the SSB X-TRA Trading files.
+    If brok = "ssb" Then
+        ssbfile = ActiveSheet.Name
+        charspot = InStr(1, ssbfile, "_", 1)
+        If charspot Then ssbfile = Mid(ssbfile, 1, charspot - 1) 'Isolate the ticker.
+        ssbfile = ssbdir & ssbfile & ".txt"
+    End If
+    
+    If brok = "seap" Then
+        response = MsgBox("Keep calculated Seaport commissions?  One dollar confirmation fee will be included automatically.", vbYesNo + vbInformation + vbDefaultButton1 + vbApplicationModal, "Commission Schedule")
+'       Allow user to individually modify commissions for Seaport trades.
+        If response = vbNo Then
+            For count = 12 To lastrow
+                If [C6] Like "* M" Then
+                    message = Cells(count, 1) & space(1) & [B6] & space(1) & Cells(count, 3) / 1000 & " M" & space(1) & [D6] & space(1) & "at $" & [E6] & space(1) & "per bond." & Chr(13) & "Commission = ?"
+                Else
+                    message = Cells(count, 1) & space(1) & [B6] & space(1) & Cells(count, 3) & space(1) & [D6] & space(1) & "at $" & [E6] & space(1) & "per share." & Chr(13) & "Commission = ?"
+                End If
+                comnum = Cells(count, 5)
+                comnum = Application.InputBox(message, "Modify Seaport Commission", Default:=comnum, Type:=1)
+                If comnum > 0 Or (Cells(count, 5) > 0 And comnum = 0) Then Cells(count, 5) = Round(comnum, 2)
+            Next count
+        End If
+    End If
+
+'   Query whether to set schwbndcom to vbYes to override regular Schwab bond commission schedule.
+    If brok = "schw" And [C6] Like "* M" And Not (([D6] Like "*.F") Or ([D6] Like "*.AB")) Then
+        schwbndcom = vbYes + 1000  'initialize schwbndcom to something other than vbYes
+        schwbndcom = MsgBox("In PORT, override regular Schwab bond commission schedule with $5/1M schedule?", vbYesNo + vbInformation + vbDefaultButton1 + vbApplicationModal, "Commission Schedule")
+    End If
+
+'   Construct the tranline (and intline, if necessary) for each account in the allocation.
+    For count = 12 To lastrow
+        code = LCase(Cells(count, 1))
+        qnty = Cells(count, 3)
+'       Calculate the commission for the trade.
+        If Cells(count, 5) <> "" Then
+            comnum = Round(Cells(count, 5), 2)
+            If brok = "seap" Then  'Add $1.00 Seaport confirmation fee in PORT trade blotter only.
+                comnum = comnum + 1
+            End If
+        ElseIf brok = "schw" Then
+            If [C6] Like "* M" Then
+                If schwbndcom = vbYes Then
+                    comnum = Round(1 * Cells(count, 3) / 1000, 2)  'Post a $1/1M commission to trade blotter.
+                    If action = "by " Then
+                        rate = "@" & CStr([E6] - 0.1)  'Schwab includes this commission in the trade price (i.e. principal).
+                    Else
+                        rate = "@" & CStr([E6] + 0.1)  'Schwab includes this commission in the trade price (i.e. principal).
+                    End If
+                Else
+                    comnum = Max(27, Round(3 * Cells(count, 3) / 1000, 2))
+                End If
+            ElseIf Cells(count, 28) = "S" Or Cells(count, 28) = "s" Then
+                comnum = 0
+            Else
+                comnum = Round(0 + 0 * (Max(0, Cells(count, 3) - 1000)), 2)
+            End If
+        Else
+            comnum = 0
+        End If
+        comtxt = CStr(comnum)  'Convert the numerical commission into a text representation.
+'       Format commission text to two decimal places.
+        If comnum = Int(comnum) Then
+            comtxt = comtxt & ".00"
+        ElseIf 10 * comnum = Int(10 * comnum) Then
+            comtxt = comtxt & "0"
+        End If
+'       Construct the tranline with proper formatting (spacing) for the PORT Trade Blotter.
+        tranline = code & space(9 - Len(code)) & action & tdate & ty & sym & space(9 - Len(sym))
+        tranline = tranline & rate & space(12 - Len(rate)) & "ca" & space(6) & space(11 - Len(qnty)) & qnty & space(1)
+        tranline = tranline & brok & space(8 - Len(brok)) & space(9 - Len(comtxt)) & comtxt
+        If [C6] Like "* M" Then
+            accrint = Max(Round(Cells(count, 3) * (intrate / 100), 2), 0)  'Overrule negative answers due to errors.
+            accrint_txt = CStr(accrint)
+'           Format accrued interest text to two decimal places.
+            If accrint = Int(accrint) Then
+                accrint_txt = accrint_txt & ".00"
+            ElseIf 10 * accrint = Int(10 * accrint) Then
+                accrint_txt = accrint_txt & "0"
+            End If
+'           Enter all zero and "too large" interest amounts as "1"... such interest amounts are likely due to errors.
+            If Not (accrint < 100000000) Or accrint = 0 Then accrint_txt = "1"
+            
+            intline = code & space(9 - Len(code))
+            If action = "by " Then
+                intline = intline & "ai "
+            Else
+                intline = intline & "in "
+            End If
+            intline = intline & tdate & ty & sym & space(9 - Len(sym)) & space(11 - Len(accrint_txt)) & accrint_txt
+            intline = intline & " ca" & space(6) & space(11 - Len(qnty)) & qnty
+            PortArray(2 * (count - 11) - 1) = tranline
+            PortArray(2 * (count - 11)) = intline
+        Else
+            PortArray(count - 11) = tranline
+        End If
+        
+'       Construct the transaction lines to be imported to the Schwab Web Trading file
+        If brok = "schw" Then
+            schwline = Left(Cells(count, 2), 4) & Right(Cells(count, 2), 4) & "," & Cells(count, 3)
+            SchwArray(count - 11) = schwline
+        End If
+
+'       Construct the transaction lines to be imported to the SSB X-TRA file
+        If brok = "ssb" Then
+            ssbline = Cells(count, 1) & Chr(9) & Cells(count, 2) & Chr(9) & Cells(count, 3)
+            ssbline = ssbline & Chr(9) & [D6] & Chr(9) & [E6] & Chr(9)
+            If [B6] = "BOT" Then
+                ssbline = ssbline & "buy"
+            Else
+                ssbline = ssbline & "sell"
+            End If
+            SSBArray(count - 11) = ssbline
+        End If
+    Next count
+    
+    If Not ([C6] Like "* M") Then
+        ReDim Preserve PortArray(lastrow - 11) 'Minimize PortArray size (bonds get two lines per acct, stocks only one line).
+    End If
+    
+    ActiveWorkbook.Save ' Save the workbook.
+
+'   Write all elements (transactions) in PortArray to the PORT Trade Blotter
+    iFileNum = FreeFile()
+    Open topost For Append As iFileNum
+    For count = 1 To UBound(PortArray)
+        Print #iFileNum, PortArray(count)
+    Next count
+'   Add comment line to the PORT Trade Blotter for sales.
+'    If action = "sl " Then
+'        message = ";        ;  " & tdate & "Change $close in firmwide.inf from specify to fifo"
+'        Print #iFileNum, message
+'    End If
+    Close iFileNum  'Close the PORT Trade Blotter.
+
+'   Write all elements (transactions) in SchwArray to the Schwab Web Trading files
+    If brok = "schw" Then
+        iFileNum = FreeFile()
+        Open schwfileh For Output As iFileNum
+        Print #iFileNum, header
+        For count = 1 To UBound(SchwArray)
+            Print #iFileNum, SchwArray(count)
+        Next count
+        Print #iFileNum, footer
+        Close iFileNum  'Close the Schwab Web Trading file w/ header.
+    
+        iFileNum = FreeFile()
+        Open schwfile For Output As iFileNum
+        For count = 1 To UBound(SchwArray)
+            Print #iFileNum, SchwArray(count)
+        Next count
+        Print #iFileNum, footer
+        Close iFileNum  'Close the Schwab Web Trading file w/o header.
+    End If
+
+'   Write all elements (transactions) in SSBArray to an SSB X-TRA file.
+    If brok = "ssb" Then
+        iFileNum = FreeFile()
+        Open ssbfile For Output As iFileNum
+        For count = 1 To UBound(SSBArray)
+            Print #iFileNum, SSBArray(count)
+        Next count
+        Close iFileNum  'Close the SSB X-TRA file.
+    End If
+
+'   Choose whether to use CUSIP (calculated in PORT) instead of PORT symbol.
+    If [Z4] <> "" Then
+        message = "Replace PORT symbol " & [D6] & " with CUSIP " & [Z4] & " in printout?"
+        response = MsgBox(message, vbYesNo + vbInformation + vbDefaultButton1 + vbApplicationModal, "Use CUSIP?")
+        If response = vbYes Then [D6] = [Z4]
+    End If
+
+    ActiveWorkbook.Save ' Save the workbook.
+
+'    ActiveWindow.SelectedSheets.PrintOut Copies:=1 ' Print the allocation fax.
+
+Command3_Exit:
+    Exit Sub
+
+Command3_Err:
+    Application.ScreenUpdating = True
+    MsgBox "AllocationFax failed for Active Workbook", vbOKOnly + vbCritical, "Error!"
+    On Error GoTo 0  'Disable error handling.
+    Resume Command3_Exit
+End Sub
+
+Sub Commission()
+'
+' Commission Macro
+' Macro recorded 11/19/2004 by Michael C. Ontiveros
+'
+
+'   This macro copies the commission tag column on the far right (Column AB) and inserts it
+'   before Column A, unless that has already been done, in which case it undoes that sequence
+'   by deleting Column A.
+    
+    If [A9] = "C" And [A10] = "T" Then
+        Columns("A:A").Select
+        Selection.Delete Shift:=xlToLeft
+        [C12].Select
+    Else
+        Columns("AB:AB").Select
+        Selection.Copy
+        Columns("A:A").Select
+        Selection.Insert Shift:=xlToRight
+        [A1].ClearContents
+        [A9] = "C"
+        [A10] = "T"
+        Columns("A:A").Select
+        Selection.ColumnWidth = 1.5
+        [D12].Select
+    End If
+
+End Sub
