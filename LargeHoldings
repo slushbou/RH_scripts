@@ -1,0 +1,324 @@
+Option Explicit
+'
+' LargeHoldings Macro
+' Macro recorded 6/13/01 by Michael Ontiveros
+'
+' Keyboard Shortcut: Ctrl+Shift+L
+'
+'
+Sub LargeHoldings()
+    
+    Dim class As String
+    Dim Row As Integer
+    Dim cutrows As Integer
+    Dim oFS As Object
+    
+    Workbooks.OpenText filename:="H:\RHAM\TRADING\Allocs\Text\holdings.t", Origin:= _
+        xlWindows, StartRow:=1, DataType:=xlFixedWidth, FieldInfo:= _
+        Array(Array(0, 1), Array(10, 1), Array(32, 1), Array(41, 1), Array(55, 1), _
+        Array(64, 1), Array(78, 1), Array(85, 1))
+    
+    With Cells.Font
+        .Name = "Times New Roman"
+        .Size = 12
+    End With
+    
+    class = [B3] & [C3] & [D3] & [E3] & [F3] & [g3] & [H3]
+    Rows("1:4").ClearContents
+    Rows("1:4").HorizontalAlignment = xlCenter
+    [D1] = "ROUND HILL ASSET MANAGEMENT"
+    [D2] = "PORTFOLIO APPRAISAL"
+    [D3] = class
+    [D4] = Date
+    Rows("6:7").HorizontalAlignment = xlCenter
+    Rows("7:7").Font.Underline = xlSingle
+    
+    Rows("8:8").ClearContents
+    [A10] = "COMMON STOCK"
+    [A10].Font.Underline = xlSingle
+    [B10].ClearContents
+    Rows("11:11").ClearContents
+    Range("A12").End(xlDown).Select
+    Row = ActiveCell.Row
+    Range(Cells(12, 1), Cells(Row, 10)).Sort Key1:=Columns(6), Order1:=xlDescending, header:=xlNo
+    Range(Cells(Row + 1, 1), Cells(Row + 1, 10)).ClearContents
+    Range(Cells(Row + 2, 4), Cells(Row + 2, 8)).Select
+    With Selection.Borders(xlTop)
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlBottom)
+        .LineStyle = xlDouble
+    End With
+    
+    ' Since it is conceivable that at some point we may not own Preferred Stock, attempt to process this type only if
+    ' we do own some preferred stock.
+    If Cells(Row + 4, 1).VALUE = "PREFERRED" And Cells(Row + 4, 2).VALUE = "STOCK" Then
+        Cells(Row + 4, 1).VALUE = "PREFERRED STOCK"
+        Cells(Row + 4, 1).Font.Underline = xlSingle
+        Cells(Row + 4, 2).ClearContents
+        Range(Cells(Row + 5, 1), Cells(Row + 5, 10)).ClearContents
+        ' Handle separately the case where only a single preferred stock is owned.
+        If Cells(Row + 7, 1).VALUE = "" Then
+            Cells(Row + 6, 1).Select
+        Else
+            Cells(Row + 6, 1).End(xlDown).Select
+            Range(Cells(Row + 6, 1), Cells(ActiveCell.Row, 10)).Sort Key1:=Columns(6), Order1:=xlDescending, header:=xlNo
+        End If
+        Row = ActiveCell.Row
+        Range(Cells(Row + 1, 1), Cells(Row + 1, 10)).ClearContents
+        Range(Cells(Row + 2, 4), Cells(Row + 2, 8)).Select
+        With Selection.Borders(xlTop)
+            .Weight = xlThin
+        End With
+        With Selection.Borders(xlBottom)
+            .LineStyle = xlDouble
+        End With
+    End If
+    Row = Row + 4
+    
+    cutrows = 0
+    Do While Cells(Row + cutrows, 1).VALUE <> "CORPORATE"
+        cutrows = cutrows + 1
+    Loop
+    If cutrows > 0 Then
+        Range(Cells(Row, 1), Cells(Row + cutrows - 1, 10)).Delete Shift:=xlUp
+    End If
+    
+    Cells(Row, 1).VALUE = "CORPORATE BONDS"
+    Cells(Row, 1).Font.Underline = xlSingle
+    Cells(Row, 2).ClearContents
+    Range(Cells(Row + 1, 1), Cells(Row + 1, 10)).ClearContents
+    Cells(Row + 2, 1).End(xlDown).Select
+    Range(Cells(Row + 2, 1), Cells(ActiveCell.Row, 10)).Sort Key1:=Columns(6), Order1:=xlDescending, header:=xlNo
+    Row = ActiveCell.Row
+    Range(Cells(Row + 1, 1), Cells(Row + 1, 10)).ClearContents
+    Range(Cells(Row + 2, 4), Cells(Row + 2, 8)).Select
+    With Selection.Borders(xlTop)
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlBottom)
+        .LineStyle = xlDouble
+    End With
+    
+    Cells(Row + 4, 1).VALUE = "CONVERTIBLE BONDS"
+    Cells(Row + 4, 1).Font.Underline = xlSingle
+    Cells(Row + 4, 2).ClearContents
+    Range(Cells(Row + 5, 1), Cells(Row + 5, 10)).ClearContents
+    Cells(Row + 6, 1).End(xlDown).Select
+    Range(Cells(Row + 6, 1), Cells(ActiveCell.Row, 10)).Sort Key1:=Columns(7), Order1:=xlDescending, header:=xlNo
+    Row = ActiveCell.Row
+    Range(Cells(Row + 1, 1), Cells(Row + 1, 10)).ClearContents
+    Range(Cells(Row + 2, 4), Cells(Row + 2, 8)).Select
+    With Selection.Borders(xlTop)
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlBottom)
+        .LineStyle = xlDouble
+    End With
+    
+    Range(Cells(Row + 4, 1), Cells(Row + 404, 10)).ClearContents
+    
+    Columns("A:A").NumberFormat = "#,##0_);[Red](#,##0)"
+    Columns("C:C").NumberFormat = "#,##0.00_);[Red](#,##0.00)"
+    Columns("D:D").NumberFormat = "#,##0_);[Red](#,##0)"
+    Columns("E:E").NumberFormat = "#,##0.00_);[Red](#,##0.00)"
+    Columns("F:F").NumberFormat = "#,##0_);[Red](#,##0)"
+    Columns("G:G").NumberFormat = "#,##0.0_);[Red](#,##0.0)"
+    Columns("H:H").NumberFormat = "#,##0_);[Red](#,##0)"
+    [D4].NumberFormat = "mm/dd/yy"
+    Columns("A:A").ColumnWidth = 9
+    Columns("B:B").ColumnWidth = 9
+    Columns("C:C").ColumnWidth = 9
+    Columns("D:D").ColumnWidth = 10
+    Columns("E:E").ColumnWidth = 9
+    Columns("F:F").ColumnWidth = 10
+    Columns("G:G").ColumnWidth = 6
+    Columns("H:H").ColumnWidth = 10
+    Columns("B:B").HorizontalAlignment = xlLeft
+    
+    Range("A1").Select
+    Sheets("HOLDINGS").Name = "RH Large Holdings"
+    With ActiveSheet.PageSetup
+        .PrintTitleRows = "$6:$8"
+        .CenterFooter = "Page &P of &N"
+        .Zoom = 100
+    End With
+    
+    Rows("9:9").Delete Shift:=xlUp
+    [A9].Select
+    ActiveWindow.FreezePanes = True
+
+    
+    Range("A1").Select
+    Set oFS = CreateObject("Scripting.FileSystemObject")
+    If oFS.FileExists("H:\RHAM\TRADING\Spreadsheets\RH Large Holdings.xls") Then
+        Kill "H:\RHAM\Trading\Spreadsheets\RH Large Holdings.xls"  'Delete old version.
+    End If
+    Set oFS = Nothing  'Clear memory occupied by object variable
+    ActiveWorkbook.SaveAs filename:="H:\RHAM\Trading\Spreadsheets\RH Large Holdings.xls", FileFormat:=xlNormal
+End Sub
+
+Sub Exper()
+
+    Dim oFile As Object
+    Dim oFiles As Object
+    Set oFiles = CreateObject("Scripting.FileSystemObject").GetFolder("H:\rham\trading\allocs\").Files
+    
+    Dim i As Integer
+    i = 1
+    For Each oFile In oFiles
+        Cells(i, 1) = oFile.Name
+        i = i + 1
+    Next oFile
+    
+    Set oFile = Nothing
+    Set oFiles = Nothing
+
+End Sub
+
+' This macro opens a TPP .cli file and formats it for easy use in Excel.  It concatenates
+' data from the cells containing the imported header rows of the .cli file so that the content
+' reads more like it does in TPP.  The macro also parses data from the transaction lines so that
+' it fits easily into spreadsheet format for easy access and computation.
+
+Sub PORT()
+
+    Dim clidir As String
+    Dim clifile As String
+    Dim k As Integer
+    Dim lastrow As Integer
+
+    clidir = "H:\PORT\cli"
+    clifile = Application.InputBox(Prompt:="Which PORT client file do you want to open?", Default:="label", Type:=2)
+    
+    '  Determine if user included .cli extension at prompt; adjust input accordingly.
+    If Len(clifile) > 4 Then
+        If LCase(Mid(clifile, Len(clifile) - 3, 4)) = ".cli" Then
+            clifile = clidir & clifile
+        Else
+            clifile = clidir & clifile & ".cli"
+        End If
+    Else
+        clifile = clidir & clifile & ".cli"
+    End If
+    
+    '  Open the .cli file from TPP
+    Err = 0
+    On Error Resume Next
+    Workbooks.OpenText filename:=clifile, _
+        Origin:=xlWindows, StartRow:=1, DataType:=xlFixedWidth, _
+        FieldInfo:=Array(Array(0, 1), Array(2, 1), Array(9, 1), Array(12, 1), _
+        Array(21, 1), Array(33, 1), Array(42, 1), Array(54, 1), Array(63, 1), Array( _
+        73, 1))
+    If Err Then
+        MsgBox "Cannot open client file."
+        Err = 0
+        Exit Sub
+    End If
+    Err = 0
+    On Error GoTo 0  'Turn off error handling
+    
+    '  Find last row (number).
+    [A12].End(xlDown).Select
+    lastrow = ActiveCell.Row
+    
+    '  Determine row in which transactions begin.
+    k = 1
+    Do Until IsNumeric(Cells(k, 2))
+        k = k + 1
+        If k > lastrow Then Exit Do  'No transactions in file if k > lastrow.
+    Loop
+    
+    '  For files with transactions, convert PORT dates to conventional dates,
+    '  and archive original sort order
+    If k <= lastrow Then
+
+        '  Make a breakline where the transactions begin.
+        Cells(k, 1).Select
+        Rows(k).Select
+        Selection.Insert Shift:=xlDown
+        
+        '  Copy the PORT dates to Column L for later reference and archiving.
+        Range(Cells(k + 1, 12), Cells(lastrow + 1, 12)).FormulaR1C1 = "=RC2"
+        Range(Cells(k + 1, 12), Cells(lastrow + 1, 12)).Select
+        Selection.Copy
+        Selection.PasteSpecial Paste:=xlValues, Operation:=xlNone, SkipBlanks:= _
+            False, Transpose:=False
+        Application.CutCopyMode = False
+
+        '  Enter formulas in Column M to convert the PORT dates in Column B.
+        Range(Cells(k + 1, 13), Cells(lastrow + 1, 13)).FormulaR1C1 = _
+            "=DATE(IF(MOD(RC[-1],100)>=50,1900,2000)+MOD(RC[-1],100),INT(RC[-1]/10000),MOD(INT(RC[-1]/100),100))"
+        
+        '  Freeze Column M and move the data to overwrite Column B.
+        Range(Cells(k + 1, 13), Cells(lastrow + 1, 13)).Select
+        Selection.Copy
+        Selection.PasteSpecial Paste:=xlValues, Operation:=xlNone, SkipBlanks:= _
+            False, Transpose:=False
+        Application.CutCopyMode = False
+        Selection.Cut
+        Range(Cells(k + 1, 2), Cells(lastrow + 1, 2)).Select
+        ActiveSheet.Paste
+        Selection.NumberFormat = "mm/dd/yy"
+        
+        '  Column headings and cell formatting
+        Cells(k - 2, 12).VALUE = "PORT"
+        Cells(k - 1, 12).VALUE = "Date"
+        Range(Cells(k - 2, 12), Cells(k - 1, 12)).Select
+        Selection.HorizontalAlignment = xlCenter
+        Cells(k - 1, 12).Select
+        Selection.Font.Underline = xlUnderlineStyleSingle
+        
+        If k + 1 <= lastrow Then  'Do only if file has more than one transaction line.
+        
+            '  Column headings and cell formatting
+            Cells(k - 3, 13).VALUE = "Original"
+            Cells(k - 2, 13).VALUE = "Sort"
+            Cells(k - 1, 13).VALUE = "Order"
+            Range(Cells(k - 3, 13), Cells(k - 1, 13)).Select
+            Selection.HorizontalAlignment = xlCenter
+            Cells(k - 1, 13).Select
+            Selection.Font.Underline = xlUnderlineStyleSingle
+            
+            '  Populate Column M with the numerical ordering of the transaction lines.
+            '  The purpose of doing this is to allow transactions to be sorted by symbol
+            '  or some other parameter in Excel, but then to be unsorted back to their
+            '  original ordering.
+            Cells(k + 1, 13).VALUE = 1
+            Range(Cells(k + 2, 13), Cells(lastrow + 1, 13)).FormulaR1C1 = "=R[-1]C+1"
+            Range(Cells(k + 2, 13), Cells(lastrow + 1, 13)).Select
+            Selection.Copy
+            Selection.PasteSpecial Paste:=xlValues, Operation:=xlNone, SkipBlanks:= _
+                False, Transpose:=False
+            Application.CutCopyMode = False
+
+        End If
+        
+        [A1].Select
+
+    End If
+
+    '  Move label data to Column O and beyond.
+    Range(Cells(1, 1), Cells(k - 1, 11)).Select
+    Selection.Cut
+    Range("O1").Select
+    ActiveSheet.Paste
+    
+    '  Concatenate all labels rom each row and display in Column A.
+    Range(Cells(1, 1), Cells(k - 1, 1)).FormulaR1C1 = "=CONCATENATE(RC[14],RC[15])"
+    
+    '  Concatenate all label data rom each row and display in Column B.
+    Range(Cells(1, 2), Cells(k - 1, 2)).FormulaR1C1 = _
+        "=CONCATENATE(RC[15],RC[16],RC[17],RC[18],RC[19],RC[20],RC[21],RC[22])"
+    
+    '  Freeze concatenated labels and label data.
+    Range(Cells(1, 1), Cells(k - 1, 11)).Select
+    Selection.Copy
+    Selection.PasteSpecial Paste:=xlValues, Operation:=xlNone, SkipBlanks:= _
+        False, Transpose:=False
+    Application.CutCopyMode = False
+    
+    [H1].VALUE = "UNCONCATENATED DATA BEGINS IN COLUMN O ----------->"
+    [A1].Select
+
+End Sub
