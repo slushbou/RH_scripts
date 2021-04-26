@@ -1,0 +1,100 @@
+Sub VALUE()
+'
+' VALUE Macro
+' Macro recorded  by Ara Abajian
+'
+
+'
+    ChDir "H:\Slwin\08047764"
+    Workbooks.Open filename:="H:\Slwin\08047764\Schwab.xls"
+    Workbooks.Open filename:="H:\Slwin\08047764\cash01.csv"
+    Workbooks.Open filename:="H:\Slwin\08047764\cash03.csv"
+    Workbooks.Open filename:="H:\Slwin\08047764\cash07.csv"
+    ActiveWindow.ScrollRow = 157
+    ActiveWindow.SmallScroll Down:=316
+    Range("A500:G500").Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range("A2:G500").Select
+    Range("A500").Activate
+    Selection.Copy
+    Windows("cash03.csv").Activate
+    ActiveWindow.SmallScroll Down:=477
+    Range("A501").Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    ActiveWindow.SmallScroll Down:=10
+    ActiveWindow.LargeScroll Down:=13
+    ActiveWindow.SmallScroll Down:=12
+    Range("A999:G999").Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range("A2:G999").Select
+    Range("A999").Activate
+    Selection.Copy
+    Windows("cash01.csv").Activate
+    ActiveWindow.LargeScroll Down:=1
+    ActiveWindow.ScrollRow = 36
+    ActiveWindow.SmallScroll Down:=439
+    Range("A501").Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    ActiveWindow.LargeScroll Down:=27
+    ActiveWindow.SmallScroll Down:=22
+    Range("A1498:G1498").Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range("A2:G1498").Select
+    Range("A1498").Activate
+    Selection.Sort Key1:=Range("B2"), Order1:=xlAscending, header:=xlNo, _
+        OrderCustom:=1, MatchCase:=False, Orientation:=xlTopToBottom
+    Selection.Copy
+    Windows("Schwab.xls").Activate
+    ActiveWindow.SmallScroll Down:=-9
+    Range("D2").Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    ActiveWindow.SmallScroll ToRight:=5
+    Columns("P:P").Select
+    Selection.Copy
+    Columns("L:L").Select
+    Selection.PasteSpecial Paste:=xlValues, Operation:=xlNone, SkipBlanks:= _
+        False, Transpose:=False
+    Range("D2:L2").Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Application.CutCopyMode = False
+    Selection.Sort Key1:=Range("L2"), Order1:=xlAscending, header:=xlGuess, _
+        OrderCustom:=1, MatchCase:=False, Orientation:=xlTopToBottom
+    Range("H61581").Select
+    Selection.End(xlUp).Select
+    Selection.End(xlUp).Select
+    Range("H2").Select
+    ActiveWindow.SmallScroll Down:=-9
+    Windows("cash07.csv").Activate
+    Range("K2").Select
+    ActiveWindow.Close
+    Windows("cash03.csv").Activate
+    ActiveWindow.Close
+    Windows("cash01.csv").Activate
+    ActiveWindow.Close
+End Sub
