@@ -1,0 +1,106 @@
+Option Explicit
+'  The PosChk macro enables a client to run The Professional Portfolio with positions
+'  reported to four decimal places instead of the usual zero, but without having to manually
+'  adjust the decimals fields for all relevant securities and without imposing this setting
+'  on other users.  Furthermore, once the client exits TPP, settings automatically revert
+'  to their default values on next startup.
+
+Sub PosChk()
+    
+    Const EXESRV = "H:\PORT\exe\"
+    Const EXECLI = "C:\PORT\exe\"
+    Const INFSRV = "H:\PORT\inf\"
+    Const INFCLI = "C:\PORT\inf\"
+    Const TYPSRV = INFSRV & "TYPE.INF"
+    Const TYPCLI = INFCLI & "TYPE.INF"
+    Const FWSRV = "H:\PORT\exe\FIRMWIDE.INF"
+    Const FWCLI = "C:\PORT\exe\FIRMWIDE.INF"
+    Const ForReading = 1
+    Const ForWriting = 2
+    Const vbNormalFocus = 1
+    Const TPPCLI = "CMD /C CD\ & C: & CD C:\PORT\exe & PROPORT.EXE"
+    
+    Dim strTemp As String
+    Dim strLine As String
+    
+    Dim objFSO As Object
+    Dim objTextFile As Object
+    
+    '  Specify Error Handling
+    On Error GoTo Command1_Err
+    
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    
+    '  Process the contents of the server's TYPE.INF file to a temporary string.
+    Set objTextFile = objFSO.OpenTextFile(TYPSRV, ForReading)
+    strTemp = ""
+    Do Until objTextFile.AtEndOfStream
+        strLine = objTextFile.ReadLine
+        '  For security types that may be bought and sold,
+        '  change decimals to 4 (default is zero).
+        If Len(strLine) > 18 Then
+            If LCase(Right(Left(strLine, 4), 1)) = "y" Then
+                strTemp = strTemp & Left(strLine, 16) & "4" & _
+                          Right(strLine, Len(strLine) - 17) & vbCrLf
+            Else
+                strTemp = strTemp & strLine & vbCrLf
+            End If
+        Else
+            strTemp = strTemp & strLine & vbCrLf
+        End If
+    Loop
+    objTextFile.Close
+    Set objTextFile = Nothing
+    
+    '  Create a folder on the client machine for *.INF files, if it does not already exist.
+    If Not objFSO.FolderExists(INFCLI) Then objFSO.CreateFolder (INFCLI)
+    
+    '  Copy the contents of the server's "inf" folder to the client's "inf" folder.
+    objFSO.CopyFile INFSRV & "*", INFCLI, True
+    
+    '  Copy modified contents of the server's TYPE.INF file to the client's TYPE.INF file.
+    Set objTextFile = objFSO.OpenTextFile(TYPCLI, ForWriting)
+    objTextFile.Write (strTemp)
+    objTextFile.Close
+    Set objTextFile = Nothing
+    
+    '  Copy the server's FIRMWIDE.INF file to the client's machine.
+    objFSO.CopyFile FWSRV, FWCLI, True
+    
+    '  Copy the contents of the FIRMWIDE.INF file to a temporary string.
+    Set objTextFile = objFSO.OpenTextFile(FWCLI, ForReading)
+    strTemp = objTextFile.ReadAll
+    objTextFile.Close
+    Set objTextFile = Nothing
+    
+    '  In the temporary string replace references to the server's
+    '  "inf" folder with references to the client's "inf" folder.
+    strTemp = Replace(strTemp, INFSRV, LCase(INFCLI), 1, -1, vbTextCompare)
+    
+    '  In the temporary string replace references to the server's
+    '  "exe" folder with references to the client's "exe" folder.
+    strTemp = Replace(strTemp, EXESRV, LCase(EXECLI), 1, -1, vbTextCompare)
+    
+    '  Copy the modified contents of the server's FIRMWIDE.INF
+    '  file to the client's FIRMWIDE.INF file.
+    Set objTextFile = objFSO.OpenTextFile(FWCLI, ForWriting)
+    objTextFile.Write (strTemp)
+    objTextFile.Close
+    Set objTextFile = Nothing
+    
+    Shell TPPCLI, vbNormalFocus
+    
+Command1_Exit:
+    Set objFSO = Nothing
+    Exit Sub
+    
+    '  Error procedures
+Command1_Err:
+    Set objTextFile = Nothing
+    strTemp = "Error Number: " & Err.Number & vbCr & vbCr & _
+                "Error Description: " & Err.Description
+    MsgBox strTemp, vbOKOnly + vbCritical, "PosChk Failed"
+    On Error GoTo 0
+    Resume Command1_Exit
+
+End Sub
