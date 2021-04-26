@@ -1,0 +1,197 @@
+Sub PROXY()
+'
+' PROXY Macro
+' Macro recorded 8/16/2005 by Ara Abajian
+'
+' Keyboard Shortcut: Ctrl+p
+'
+    Cells.Select
+    With Selection.Font
+        .Name = "Times New Roman"
+        .Size = 10
+        .Strikethrough = False
+        .Superscript = False
+        .Subscript = False
+        .OutlineFont = False
+        .Shadow = False
+        .Underline = xlUnderlineStyleNone
+        .ColorIndex = xlAutomatic
+    End With
+    Range("A1").Select
+    ActiveCell.FormulaR1C1 = "=CONCATENATE(RC[3],RC[4])"
+    Range("A1").Select
+    Selection.Copy
+    Range("A2").Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    ActiveCell.FormulaR1C1 = "=CONCATENATE(RC[3],"" "",RC[4])"
+    Range("A3").Select
+    ActiveCell.FormulaR1C1 = "=RC[3]"
+    Range("A3").Select
+    Selection.NumberFormat = "mm/dd/yy"
+    Range("A5").Select
+    ActiveCell.FormulaR1C1 = "=CONCATENATE(RC[1],"" "",RC[2],RC[3])"
+    Range("A1:A5").Select
+    Selection.Copy
+    Selection.PasteSpecial Paste:=xlValues, Operation:=xlNone, SkipBlanks:= _
+        False, Transpose:=False
+    Range("B6").Select
+    Application.CutCopyMode = False
+    Selection.ClearContents
+    Range("C1:E5").Select
+    Range("C5").Activate
+    Selection.ClearContents
+    Range("B5").Select
+    Selection.ClearContents
+    Range("A1:A5").Select
+    Selection.Cut
+    Range("B1").Select
+    ActiveSheet.Paste
+    Columns("A:A").Select
+    Selection.Delete Shift:=xlToLeft
+    Range("F5").Select
+    Columns("A:A").EntireColumn.AutoFit
+    Columns("A:A").ColumnWidth = 8.29
+    Columns("B:B").EntireColumn.AutoFit
+    Columns("B:B").Select
+    Selection.ColumnWidth = 15
+    Range("C12").Select
+    Columns("B:B").ColumnWidth = 15.57
+    Columns("C:C").ColumnWidth = 14.57
+    Columns("C:C").ColumnWidth = 19.57
+    Columns("C:C").ColumnWidth = 23.14
+    Columns("C:C").ColumnWidth = 27.43
+    Columns("D:D").ColumnWidth = 7.86
+    Columns("E:E").ColumnWidth = 10.43
+    Columns("F:F").ColumnWidth = 11.29
+    Columns("G:G").ColumnWidth = 10.71
+    Columns("H:H").ColumnWidth = 10
+    Columns("I:I").ColumnWidth = 9.86
+    Columns("J:J").ColumnWidth = 8.86
+    Range("A7:J9").Select
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+ 
+    Range("A7:J9").Select
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Rows("4:4").Select
+    Selection.Delete Shift:=xlUp
+    Range("A1:J1").Select
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Selection.Merge
+    Range("A2:J2").Select
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Selection.Merge
+    Range("A3:J3").Select
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Selection.Merge
+    Range("A9").Select
+    ActiveWindow.FreezePanes = True
+    With ActiveSheet.PageSetup
+        .PrintTitleRows = "$1:$9"
+        .PrintTitleColumns = ""
+    End With
+    ActiveSheet.PageSetup.PrintArea = ""
+    With ActiveSheet.PageSetup
+        .LeftHeader = ""
+        .CenterHeader = ""
+        .RightHeader = ""
+        .LeftFooter = ""
+        .CenterFooter = ""
+        .RightFooter = ""
+        .LeftMargin = Application.InchesToPoints(0.5)
+        .RightMargin = Application.InchesToPoints(0.5)
+        .TopMargin = Application.InchesToPoints(0.5)
+        .BottomMargin = Application.InchesToPoints(0.5)
+        .HeaderMargin = Application.InchesToPoints(0.5)
+        .FooterMargin = Application.InchesToPoints(0.5)
+        .PrintHeadings = False
+        .PrintGridlines = False
+        .PrintComments = xlPrintNoComments
+        .PrintQuality = 600
+        .CenterHorizontally = True
+        .CenterVertically = False
+        .Orientation = xlPortrait
+        .Draft = False
+        .PaperSize = xlPaperLetter
+        .FirstPageNumber = xlAutomatic
+        .Order = xlDownThenOver
+        .BlackAndWhite = False
+        .Zoom = False
+        .FitToPagesWide = 1
+        .FitToPagesTall = 10
+    End With
+    Range("G10").Select
+    ActiveCell.FormulaR1C1 = "=IF(RC[-1]>0,""Not voted on"","""")"
+    Range("H10").Select
+    ActiveCell.FormulaR1C1 = "=RC[-1]"
+    Range("J10").Select
+    ActiveCell.FormulaR1C1 = "=IF(RC[-4]*1=0,""NO PROXY RECEIVED"","""")"
+    Range("J10").Select
+    With Selection
+        .HorizontalAlignment = xlRight
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Columns("J:J").ColumnWidth = 13.86
+    Columns("J:J").ColumnWidth = 15.29
+    Columns("H:H").ColumnWidth = 12.57
+    Columns("G:G").ColumnWidth = 11.71
+
+    Columns("I:I").Select
+    Range("I4").Activate
+    Selection.NumberFormat = "mm/dd/yy;@"
+    Range("A3").Select
+    Range("A3").Activate
+    Selection.NumberFormat = "mm/dd/yy;@"
+    Columns("E:E").Select
+    Range("E4").Activate
+    Selection.NumberFormat = "#,##0"
+    Columns("F:F").Select
+    Range("F4").Activate
+    Selection.NumberFormat = "#,##0"   
+     
+End Sub
