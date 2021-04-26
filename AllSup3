@@ -1,0 +1,684 @@
+Sub ALLSUP3()
+'
+' ALLSUP3 Macro
+' Macro recorded 8/3/2006 by Ara Abajian
+'
+
+'
+    Rows("3:6").Select
+    Selection.Insert Shift:=xlDown
+    Columns("E:L").Select
+    Selection.Insert Shift:=xlToRight
+    Range("D2:H11").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Selection.Borders(xlInsideVertical).LineStyle = xlNone
+    Selection.Borders(xlInsideHorizontal).LineStyle = xlNone
+    Range("D11:H11").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Selection.Borders(xlInsideVertical).LineStyle = xlNone
+    Range("E12:K14").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Selection.Borders(xlInsideVertical).LineStyle = xlNone
+    Selection.Borders(xlInsideHorizontal).LineStyle = xlNone
+    Range("E13:J14").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Selection.Borders(xlInsideVertical).LineStyle = xlNone
+    Selection.Borders(xlInsideHorizontal).LineStyle = xlNone
+    Range("D3").Select
+    ActiveCell.FormulaR1C1 = ""
+    Range("D3").Select
+    ActiveCell.FormulaR1C1 = "Day/GTC"
+    Range("E3").Select
+    ActiveCell.FormulaR1C1 = "Quantity"
+    Range("F3").Select
+    ActiveCell.FormulaR1C1 = "Price"
+    Range("G3").Select
+    ActiveCell.FormulaR1C1 = "Filled"
+    Range("H3").Select
+    ActiveCell.FormulaR1C1 = "Open"
+        
+    Range("H4").Select
+    ActiveCell.FormulaR1C1 = "=IF(RC[-1]>0,RC[-3]-RC[-1],"""")"
+    Range("H4").Select
+    Selection.Copy
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    Range("H4").Select
+    Selection.Copy
+    Range("H4:H10").Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    Range("G11").Select
+    Selection.Font.Bold = True
+    Range("G15:G16").Select
+    Range("G16").Activate
+    
+    Range("D3:D10").Select
+    With Selection
+        .HorizontalAlignment = xlLeft
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Range("E3:H3").Select
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Range("E4:H11").Select
+    With Selection
+        .HorizontalAlignment = xlGeneral
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Range("D11").Select
+    With Selection
+        .HorizontalAlignment = xlLeft
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Range("D11").Select
+    ActiveCell.FormulaR1C1 = "FILLED"
+    Range("F11").Select
+    ActiveCell.FormulaR1C1 = "AVG-P"
+    Range("D3:H3").Select
+    Selection.Font.Bold = True
+    Range("D11:F11").Select
+    Selection.Font.Bold = True
+    Range("E4:E10").Select
+    Selection.NumberFormat = "0"
+    Range("F4:F10").Select
+    Selection.NumberFormat = "0.000"
+    Range("G4:H10").Select
+    Selection.NumberFormat = "0"
+    Range("E11").Select
+    Selection.NumberFormat = "0"
+    Range("G11").Select
+    Selection.NumberFormat = "0.0000"
+    Range("E12").Select
+    ActiveCell.FormulaR1C1 = "Quantity"
+    Range("E12").Select
+    Selection.Font.Bold = True
+    Range("E12:K12").Select
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Selection.Merge
+    Range("D2:H11").Select
+    Selection.Copy
+    Range("I2:AG2").Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    Range("A2").Select
+    ActiveWindow.SmallScroll Down:=-18
+    Range("D11:AG11").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Range("E11").Select
+    ActiveCell.FormulaR1C1 = "=SUM(R[-7]C[2]:R[-1]C[2])"
+    Range("F11").Select
+    ActiveCell.FormulaR1C1 = "AVG-P"
+    Range("G11").Select
+    ActiveCell.FormulaR1C1 = _
+        "=IF(RC[-2]>0,SUMPRODUCT(R[-7]C[-1]:R[-1]C[-1],R[-7]C:R[-1]C)/RC[-2],0)"
+    Range("D11:H11").Select
+    Selection.Copy
+    Range("I11:AG11").Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    Range("D1").Select
+    ActiveCell.FormulaR1C1 = "SCHW COMM:"
+    Range("D1").Select
+    With Selection
+        .HorizontalAlignment = xlLeft
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Range("F1").Select
+    ActiveCell.FormulaR1C1 = _
+        "=CONCATENATE(""$10-"",ROUNDDOWN(IF(R[10]C[1]>0,1000/R[10]C[1],1000/R[11]C[-3]),0))"
+    Range("F1").Select
+    ActiveCell.FormulaR1C1 = _
+        "=CONCATENATE(""$10-"",ROUNDDOWN(IF(R[10]C[1]>0,1000/R[10]C[1],1000/R[11]C[-3]),0))"
+    Range("G1").Select
+    ActiveCell.FormulaR1C1 = _
+        "=CONCATENATE(""$15-"",ROUNDDOWN(IF(R[10]C>0,3000/R[10]C,3000/R[11]C[-4]),0))"
+    Range("D2").Select
+    ActiveCell.FormulaR1C1 = "SCHW"
+    Range("I2").Select
+    ActiveCell.FormulaR1C1 = "AMTD"
+    Range("N2").Select
+    ActiveCell.FormulaR1C1 = "MSSB"
+    Range("S2").Select
+    ActiveCell.FormulaR1C1 = "SEAP"
+    Range("X2").Select
+    ActiveCell.FormulaR1C1 = "OTHER"
+    Range("AC2").Select
+    ActiveCell.FormulaR1C1 = ""
+    Range("D2:AG2").Select
+    Selection.Font.Bold = True
+    With Selection
+        .HorizontalAlignment = xlLeft
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Range("E13:K13").Select
+    Selection.Font.Bold = True
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .ShrinkToFit = False
+        .MergeCells = False
+    End With
+    Range("E13").Select
+    ActiveCell.FormulaR1C1 = "SCHW"
+    Range("F13").Select
+    ActiveCell.FormulaR1C1 = "AMTD"
+    Range("G13").Select
+    ActiveCell.FormulaR1C1 = "MSSB"
+    Range("H13").Select
+    ActiveCell.FormulaR1C1 = "SEAP"
+    Range("I13").Select
+    ActiveCell.FormulaR1C1 = "OTHER"
+    Range("J13").Select
+    ActiveCell.FormulaR1C1 = ""
+    Range("K13").Select
+    ActiveCell.FormulaR1C1 = ""
+    Range("L13").Select
+    ActiveCell.FormulaR1C1 = ""
+    Range("E14").Select
+    ActiveCell.FormulaR1C1 = "=SUM(R[2]C:R[65522]C)"
+    Range("E14").Select
+    Selection.Copy
+    Range("E14:K14").Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Selection.Borders(xlInsideVertical).LineStyle = xlNone
+    Range("E14:K14").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Selection.Borders(xlEdgeTop).LineStyle = xlNone
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Selection.Borders(xlInsideVertical).LineStyle = xlNone
+    Range("D1:H1").Select
+    With Selection.Interior
+        .ColorIndex = 6
+        .Pattern = xlSolid
+    End With
+    Range("E12:K12").Select
+    With Selection.Interior
+        .ColorIndex = 6
+        .Pattern = xlSolid
+    End With
+    Range("D2:H11").Select
+    With Selection.Interior
+        .ColorIndex = 15
+        .Pattern = xlSolid
+    End With
+    Range("E13:E14").Select
+    With Selection.Interior
+        .ColorIndex = 15
+        .Pattern = xlSolid
+    End With
+    Range("I2:M11").Select
+    With Selection.Interior
+        .ColorIndex = 42
+        .Pattern = xlSolid
+    End With
+    Range("F13:F14").Select
+    With Selection.Interior
+        .ColorIndex = 42
+        .Pattern = xlSolid
+    End With
+    Range("N2:R11").Select
+    With Selection.Interior
+        .ColorIndex = 46
+        .Pattern = xlSolid
+    End With
+    Range("G13:G14").Select
+    With Selection.Interior
+        .ColorIndex = 46
+        .Pattern = xlSolid
+    End With
+    Range("S2:W11").Select
+    With Selection.Interior
+        .ColorIndex = 33
+        .Pattern = xlSolid
+    End With
+    ActiveWindow.SmallScroll ToRight:=-6
+    Range("H13:H14").Select
+    With Selection.Interior
+        .ColorIndex = 33
+        .Pattern = xlSolid
+    End With
+    ActiveWindow.SmallScroll ToRight:=13
+    Range("X2:AB11").Select
+    With Selection.Interior
+        .ColorIndex = 45
+        .Pattern = xlSolid
+    End With
+    ActiveWindow.SmallScroll ToRight:=-13
+    Range("I13:I14").Select
+    With Selection.Interior
+        .ColorIndex = 45
+        .Pattern = xlSolid
+    End With
+    ActiveWindow.SmallScroll ToRight:=17
+    Range("AC2:AG11").Select
+    With Selection.Interior
+        .ColorIndex = 4
+        .Pattern = xlSolid
+    End With
+    ActiveWindow.SmallScroll ToRight:=-18
+    Range("J13:J14").Select
+    With Selection.Interior
+        .ColorIndex = 43
+        .Pattern = xlSolid
+    
+    End With
+    ActiveWindow.SmallScroll ToRight:=-18
+    Range("K13:K14").Select
+    With Selection.Interior
+        .ColorIndex = 4
+        .Pattern = xlSolid
+    
+    
+    End With
+    Range("E16").Select
+    ActiveCell.FormulaR1C1 = "=IF(ISERROR(LEFT(RC[-2],4)*1),"""",RC[-1])"
+    Range("F16").Select
+    ActiveCell.FormulaR1C1 = "=IF(LEFT(RC[-3],3)=""AT-"",RC[-2],"""")"
+    Range("G16").Select
+    ActiveCell.FormulaR1C1 = "=IF(LEFT(RC[-4],4)=""112-"",RC[-3],IF(LEFT(RC[-4],4)=""312-"",RC[-3],""""))"
+    Range("H16").Select
+    ActiveCell.FormulaR1C1 = "=IF(LEFT(RC[-5],3)=""S2K"",RC[-4],"""")"
+    Range("I16").Select
+    ActiveCell.FormulaR1C1 = "=IF(LEFT(RC[-6],3)=""B6-"",RC[-5],IF(LEFT(RC[-6],3)=""WS-"",RC[-5],IF(LEFT(RC[-6],2)=""R-"",RC[-5],"""")))"
+    Range("J16").Select
+    ActiveCell.FormulaR1C1 = ""
+    Range("K16").Select
+    ActiveCell.FormulaR1C1 = ""
+    Range("L16").Select
+    ActiveCell.FormulaR1C1 = ""
+      
+    
+    
+    Dim lastrow As Long
+        '  Find last row (number) and sum row (number).
+    [B17].End(xlDown).Select
+    lastrow = ActiveCell.Row
+    If lastrow > 10000 Then  'Only one account, so End(xlDown) incorrectly goes to bottom of spreadsheet.  Correct this.
+        lastrow = 17
+    End If
+    
+    Range("E16:L16").Select
+    Selection.Copy
+    Range(Cells(16, 5), Cells(lastrow, 12)).Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    Range("E16:L16").Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Selection.Copy
+    Selection.PasteSpecial Paste:=xlValues, Operation:=xlNone, SkipBlanks:= _
+        False, Transpose:=False
+
+    Range("E15").Select
+    Application.CutCopyMode = False
+    Selection.ClearContents
+
+    Range("K13").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    Selection.Borders(xlEdgeLeft).LineStyle = xlNone
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Selection.Borders(xlEdgeBottom).LineStyle = xlNone
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Range("J13:J14").Select
+    Selection.Interior.ColorIndex = 4
+    Range("K13:K14").Select
+    Selection.Interior.ColorIndex = 44
+    ActiveWindow.SmallScroll ToRight:=25
+    Range("AC2:AG11").Select
+    Selection.Copy
+    Range("AH2").Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    Selection.Interior.ColorIndex = 44
+    Range("AH2").Select
+    ActiveCell.FormulaR1C1 = ""
+    Range("D1").Select
+
+
+    ActiveWindow.SmallScroll ToRight:=27
+    Range("AH2:AL11").Select
+    Selection.Copy
+    Range("AM2").Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    Selection.Interior.ColorIndex = 10
+    Range("AM2").Select
+    ActiveCell.FormulaR1C1 = ""
+    Range("K13:K14").Select
+    Selection.Copy
+    Range("L13").Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    Range("E12:L12").Select
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .ShrinkToFit = False
+    End With
+    Selection.Merge
+    Range("L13").Select
+    ActiveCell.FormulaR1C1 = ""
+    Range("L13:L14").Select
+    Range("L14").Activate
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    Selection.Borders(xlEdgeLeft).LineStyle = xlNone
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Selection.Borders(xlInsideHorizontal).LineStyle = xlNone
+    Range("L13:L14").Select
+    Selection.Interior.ColorIndex = 10
+    Range("E12:L12").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    End With
+    Selection.Borders(xlInsideVertical).LineStyle = xlNone
+    Range("L17").Select
+
+    ActiveWindow.SmallScroll ToRight:=27
+    Range("AL16").Select
+    ActiveCell.FormulaR1C1 = "=IF(LEFT(R10C3,4)=""SOLD"",IF(RC[-24]>0,1-RC[-15],0),IF((RC[-23]/R7C3)>0.9,0,1))"
+    Range("AL16").Select
+    Selection.Copy
+    
+    Range(Cells(16, 38), Cells(lastrow, 38)).Select
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    Rows("16:16").Select
+    Range("AL16").Activate
+    Range(Cells(16, 1), Cells(lastrow, 38)).Select
+    Selection.Sort Key1:=Range("AL16"), Order1:=xlDescending, Key2:=Range( _
+        "W16"), Order2:=xlDescending, header:=xlGuess, OrderCustom:=1, MatchCase _
+        :=False, Orientation:=xlTopToBottom
+    Range("G17").Select
+ 
+  Range("J2:AQ11").Select
+    Selection.Cut
+    Range("M2").Select
+    ActiveSheet.Paste
+    Columns("J:L").Delete Shift:=xlToLeft
+    Range("J11:L11").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    Selection.Borders(xlEdgeLeft).LineStyle = xlNone
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlMedium
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlMedium
+    End With
+    Selection.Borders(xlEdgeRight).LineStyle = xlNone
+    Selection.Borders(xlInsideVertical).LineStyle = xlNone
+    Selection.Borders(xlInsideHorizontal).LineStyle = xlNone
+    Range("E12:I12").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlMedium
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlMedium
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlMedium
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlMedium
+    End With
+    Selection.Borders(xlInsideVertical).LineStyle = xlNone
+    Selection.Borders(xlInsideHorizontal).LineStyle = xlNone
+    Range("I18").Select
+  
+End Sub
