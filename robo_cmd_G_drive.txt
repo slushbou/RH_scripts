@@ -1,0 +1,63 @@
+@echo off
+rem  Purpose:  For manual backup as an alternative to automatic backup using
+rem            "Passport.vbs".
+rem  
+rem  Use a command like this after attaching an external disk drive to which to back
+rem  up RHAM files.  This command assumes the TrueCrypt (TC) vault has already been
+rem  mounted on W:.
+rem
+rem  So the steps for manual backup are:
+rem    1.  Attach the external disk drive
+rem    2.  Mount the TC volume on W:
+rem    3.  In the existing backup folder on W:, change the date in the filename.
+rem
+rem    4.  (a)  In this script (robo_cmd.txt), change the dates in the filenames as needed --
+rem          3 places. (and save this file if it is to be used as a .bat file).
+rem
+rem        (b)  Set log file destination on host computer.
+rem
+rem    5.  From X:\Backups_Remote\, run the robocopy command below.  Alternatively,
+rem             you could run this file as a batch file if you prefer.
+rem        (a)  [TBD] May need to set attributes -H (hidden), -S (system) to backup (archive) folder
+rem             if robocopy sets them undesired.
+rem        (b)  It will take a few minutes.  While it's running, you can expect to see
+rem                Log File: <log file name>
+rem   
+rem    6.  Verify that the logfile is produced as expected.  Verify no errors.
+rem    7.  Dismount the TC vault
+rem    8.  Remove/eject from Windows, then detach the external disk drive
+rem  
+rem  Date created:  2016-10-20
+rem  Changes     :  2020-10-20  Added cmd lines to copy from Google Drive using Google File Stream on G: .
+rem
+rem  To Do:  Set log file destination on source computer.
+rem
+rem  -----------------------------------------------------------------------------------------------------
+
+@echo on
+rem ROBOCOPY X:\Backups_Local\-0_BKUP_2017-01-20_Fri  W:\Backup_2017-01-20_Fri  /MIR /XA:SH /R:2 /W:5 /NP  /LOG:Logs\Backup_Passport_2017-01-20.log
+rem ROBOCOPY X:\Backups_Local\-0_BKUP_2018-05-29_Tue  W:\Backup_2018-05-29  /MIR /XA:SH /R:2 /W:5 /NP  /LOG:Logs\Backup_2018-05-29.log
+
+rem 2018-10-16   Change retries (/R:) to zero until cause of backup problem can be found.
+rem 2018-10-16   Change wait    (/W:) to 2    until cause of backup problem can be found.
+rem 2018-11-07   Add /DST switch to prevent copying files based on 1-hour time difference from Daylight Saving Time.
+
+rem -- Last working version with servers in Suite 220 until March, 2020 --
+rem --   ROBOCOPY X:\Backups_Local\-0_BKUP_2019-01-17_Thu  W:\Backup_2019-01-17  /MIR /XA:SH /R:0 /W:2 /NP /DST /LOG:Logs\Backup_2019-01-17.log
+rem --
+rem  2018-02-14  Exclude "Daily Information" research directory on K: that is so voluminous
+rem              /XD "Daily Information"
+
+rem -- 2020-10-20:  changed to work with Google File Stream as file source  -----
+rem --
+ROBOCOPY "G:\Shared Drives\H"  W:\Backup_2019-01-17\H  /MIR /XA:SH /R:0 /W:2 /NP /DST /LOG:Logs\Backup_2019-01-17.log
+ROBOCOPY "G:\Shared Drives\K"  W:\Backup_2020-10-20\K  /MIR /XA:SH /R:0 /W:2 /NP /DST /LOG:RHAM\Backup_logs\Backup_2020-10-20.log
+rem --  cmd run from  C:\Users\Scott, so RHAM\ is under there.
+rem --
+rem  Removed "/MIR" parameter to avoid leaving out files accidentally removed (yet still wanted) from source.
+rem  "/XA:SH" = exclude files with attibutes "hidden" and "system"
+rem  "/R:0"   = retry zero times
+rem  "/W:2"   = wait 2 seconds for retry
+rem  "/NP"    = no progress, i.e., don't display % complete
+rem  "/DST"   = compensate for one-hour DST time differences
+rem
